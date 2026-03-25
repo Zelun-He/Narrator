@@ -41,6 +41,12 @@ export interface BookStatusSnapshot {
   updatedAt: string
 }
 
+export interface BookChaptersSnapshot {
+  bookId: string
+  chapters: Chapter[]
+  updatedAt: string
+}
+
 function getDurationLabel(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
   const sec = String(seconds % 60).padStart(2, "0")
@@ -192,7 +198,7 @@ export async function getBookStatus(bookId: string): Promise<BookStatusSnapshot 
   return makeStatusSnapshot(updated)
 }
 
-export async function listBookChapters(bookId: string): Promise<Chapter[] | null> {
+export async function listBookChapters(bookId: string): Promise<BookChaptersSnapshot | null> {
   const current = await storeAdapter.getBook(bookId)
   if (!current) return null
 
@@ -201,7 +207,11 @@ export async function listBookChapters(bookId: string): Promise<Chapter[] | null
     await storeAdapter.saveBook(updated)
   }
 
-  return updated.chaptersList
+  return {
+    bookId: updated.id,
+    chapters: updated.chaptersList,
+    updatedAt: updated.updatedAt,
+  }
 }
 
 export async function createBook(input: CreateBookInput): Promise<BookDetails> {
