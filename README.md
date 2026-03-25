@@ -19,7 +19,7 @@ Narrator is a full-stack web application that converts written manuscripts (PDF,
 | Form Handling | React Hook Form + Zod |
 | Icons | Lucide React |
 | Charts | Recharts |
-| Storage | JSON file system (Node.js fs) |
+| Storage | JSON file system or SQLite (`NARRATOR_STORAGE_BACKEND=sqlite`) |
 
 ## Architecture Overview
 
@@ -117,6 +117,8 @@ Narrator/
 | GET | `/api/books/[id]` | Get book details |
 | POST | `/api/books/[id]/generate` | Start audio generation |
 | GET | `/api/books/[id]/download` | Download audiobook files |
+| GET | `/api/books/[id]/status` | Get live status snapshot for one book |
+| GET | `/api/books/[id]/chapters` | List chapter statuses (optional `?status=` filter) |
 
 ## User Flow
 
@@ -138,7 +140,7 @@ Narrator/
 ## Development Notes
 
 - **Audio Generation**: Currently simulated based on elapsed time. To make it real, integrate an AI TTS service (ElevenLabs, PlayHT, Azure Speech) in the `startGeneration()` function in `lib/server/audiobook-store.ts`.
-- **Storage**: Uses JSON file storage. For production, replace with a proper database (PostgreSQL, MongoDB).
+- **Storage**: Uses JSON file storage by default. Set `NARRATOR_STORAGE_BACKEND=sqlite` to store records in `data/books.sqlite`.
 - **Data Location**: Books are stored in `data/books.json`, uploads in `data/uploads/`.
 
 ## Contribution Guidelines
