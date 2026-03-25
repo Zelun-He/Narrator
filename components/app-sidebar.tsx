@@ -26,7 +26,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ThemeToggle } from "@/components/theme-toggle"
 
 const navMain = [
   {
@@ -82,7 +81,7 @@ export function AppSidebar() {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-[#FF6B6B]">
                   <AudioLines className="size-4 text-white" />
                 </div>
-                <div className="flex flex-col leading-none">
+                <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-semibold">Narrator</span>
                   <span className="text-xs text-muted-foreground">AI Audiobooks</span>
                 </div>
@@ -142,7 +141,7 @@ export function AppSidebar() {
                   JD
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col leading-none">
+              <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
                 <span className="text-sm font-medium">Jane Doe</span>
                 <span className="text-xs text-muted-foreground">jane@example.com</span>
               </div>
