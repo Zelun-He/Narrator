@@ -1,4 +1,8 @@
 import type { BookStatus, Chapter } from "@/lib/audiobook-types"
+import type {
+  ChapterParseSourceStats,
+  ChapterParseStrategy,
+} from "@/lib/server/chapter-parser"
 
 export interface BookRecord {
   id: string
@@ -13,6 +17,8 @@ export interface BookRecord {
   progress: number
   coverColor: string
   chaptersList: Chapter[]
+  parserStrategy?: ChapterParseStrategy
+  parserSourceStats?: ChapterParseSourceStats
   voiceId: string | null
   voiceName: string | null
   generationStartedAt: string | null
