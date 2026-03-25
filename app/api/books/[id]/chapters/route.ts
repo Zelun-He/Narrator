@@ -10,10 +10,11 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const generatedAt = new Date().toISOString()
   const { id } = await params
-  const chapters = await listBookChapters(id)
+  const chapterSnapshot = await listBookChapters(id)
 
-  if (!chapters) {
+  if (!chapterSnapshot) {
     return NextResponse.json({ error: "Book not found." }, { status: 404 })
   }
 
@@ -21,7 +22,14 @@ export async function GET(
   const statusFilter = url.searchParams.get("status")
 
   if (!statusFilter) {
-    return NextResponse.json({ chapters })
+    return NextResponse.json({
+      chapters: chapterSnapshot.chapters,
+      apiVersion: "2026-03-25",
+      generatedAt,
+      bookId: chapterSnapshot.bookId,
+      updatedAt: chapterSnapshot.updatedAt,
+      revision: Date.parse(chapterSnapshot.updatedAt),
+    })
   }
 
   if (!ALLOWED_STATUSES.has(statusFilter as ChapterStatus)) {
@@ -32,6 +40,11 @@ export async function GET(
   }
 
   return NextResponse.json({
-    chapters: chapters.filter((chapter) => chapter.status === statusFilter),
+    chapters: chapterSnapshot.chapters.filter((chapter) => chapter.status === statusFilter),
+    apiVersion: "2026-03-25",
+    generatedAt,
+    bookId: chapterSnapshot.bookId,
+    updatedAt: chapterSnapshot.updatedAt,
+    revision: Date.parse(chapterSnapshot.updatedAt),
   })
 }
