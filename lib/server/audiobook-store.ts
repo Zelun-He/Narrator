@@ -45,12 +45,6 @@ export interface BookStatusSnapshot {
   }
 }
 
-export interface BookChaptersSnapshot {
-  bookId: string
-  chapters: Chapter[]
-  updatedAt: string
-}
-
 function getDurationLabel(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
   const sec = String(seconds % 60).padStart(2, "0")
