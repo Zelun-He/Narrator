@@ -1,86 +1,50 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 import crypto from "node:crypto"
-import type { BookDetails, BookListItem, BookStatus, Chapter, ChapterStatus } from "@/lib/audiobook-types"
+import type {
+  BookDetails,
+  BookListItem,
+  BookStatus,
+  Chapter,
+  ChapterStatus,
+} from "@/lib/audiobook-types"
+import { buildChapterSeeds } from "@/lib/server/chapter-parser"
+import { storeAdapter } from "@/lib/server/persistence"
+import type { BookRecord } from "@/lib/server/store-types"
 
 const DATA_DIR = path.join(process.cwd(), "data")
-const STORE_FILE = path.join(DATA_DIR, "books.json")
 const UPLOADS_DIR = path.join(DATA_DIR, "uploads")
-const DEFAULT_CHAPTER_COUNT = 10
 const CHAPTER_SECONDS = 8
 
 const COVER_COLORS = ["#FF6B6B", "#4ECDC4", "#F59E0B", "#A78BFA", "#0EA5E9", "#FF9F43"]
 
-interface BookRecord {
-  id: string
+interface CreateBookInput {
   title: string
   author: string
   language: string
-  fileName: string
-  fileType: string
-  fileSize: number
+  file: File
+}
+
+export interface BookStatusSnapshot {
+  bookId: string
   status: BookStatus
   progress: number
-  coverColor: string
-  chaptersList: Chapter[]
-  voiceId: string | null
-  voiceName: string | null
-  generationStartedAt: string | null
-  createdAt: string
+  chapterStats: {
+    total: number
+    completed: number
+    processing: number
+    pending: number
+    failed: number
+  }
+  activeChapter: Chapter | null
+  startedAt: string | null
   updatedAt: string
-}
-
-interface StoreData {
-  books: BookRecord[]
-}
-
-async function ensureStore() {
-  await mkdir(DATA_DIR, { recursive: true })
-  await mkdir(UPLOADS_DIR, { recursive: true })
-
-  try {
-    await readFile(STORE_FILE, "utf8")
-  } catch {
-    const initial: StoreData = { books: [] }
-    await writeFile(STORE_FILE, JSON.stringify(initial, null, 2), "utf8")
-  }
-}
-
-async function readStore(): Promise<StoreData> {
-  await ensureStore()
-  const raw = await readFile(STORE_FILE, "utf8")
-  try {
-    const parsed = JSON.parse(raw) as StoreData
-    return parsed
-  } catch {
-    return { books: [] }
-  }
-}
-
-async function writeStore(data: StoreData) {
-  await writeFile(STORE_FILE, JSON.stringify(data, null, 2), "utf8")
 }
 
 function getDurationLabel(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
   const sec = String(seconds % 60).padStart(2, "0")
   return `${minutes}:${sec}`
-}
-
-function estimateChapterCount(fileName: string, textContent: string): number {
-  const ext = path.extname(fileName).toLowerCase()
-  if (ext === ".txt" && textContent.trim().length > 0) {
-    const chapterMatches = textContent.match(/^chapter[\s0-9:-]/gim)
-    if (chapterMatches && chapterMatches.length > 1) {
-      return Math.min(50, chapterMatches.length)
-    }
-  }
-
-  return DEFAULT_CHAPTER_COUNT
-}
-
-function chapterName(index: number): string {
-  return `Chapter ${index + 1}`
 }
 
 function mapToListItem(book: BookRecord): BookListItem {
@@ -147,19 +111,57 @@ function reconcileProgress(book: BookRecord): BookRecord {
   }
 }
 
-export async function listBooks(): Promise<BookListItem[]> {
-  const store = await readStore()
+async function persistReconciled(books: BookRecord[]): Promise<BookRecord[]> {
   let changed = false
-
-  const books = store.books.map((book) => {
-    const updated = reconcileProgress(book)
-    if (updated !== book) changed = true
-    return updated
+  const reconciled = books.map((book) => {
+    const next = reconcileProgress(book)
+    if (next !== book) changed = true
+    return next
   })
 
   if (changed) {
-    await writeStore({ books })
+    await storeAdapter.saveBooks(reconciled)
   }
+
+  return reconciled
+}
+
+async function ensureUploadsDir() {
+  await mkdir(UPLOADS_DIR, { recursive: true })
+}
+
+function getChapterStats(chapters: Chapter[]) {
+  return chapters.reduce(
+    (acc, chapter) => {
+      acc[chapter.status] += 1
+      return acc
+    },
+    { completed: 0, processing: 0, pending: 0, failed: 0 }
+  )
+}
+
+function makeStatusSnapshot(book: BookRecord): BookStatusSnapshot {
+  const stats = getChapterStats(book.chaptersList)
+
+  return {
+    bookId: book.id,
+    status: book.status,
+    progress: book.progress,
+    chapterStats: {
+      total: book.chaptersList.length,
+      completed: stats.completed,
+      processing: stats.processing,
+      pending: stats.pending,
+      failed: stats.failed,
+    },
+    activeChapter: book.chaptersList.find((chapter) => chapter.status === "processing") ?? null,
+    startedAt: book.generationStartedAt,
+    updatedAt: book.updatedAt,
+  }
+}
+
+export async function listBooks(): Promise<BookListItem[]> {
+  const books = await persistReconciled(await storeAdapter.listBooks())
 
   return books
     .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
@@ -167,39 +169,58 @@ export async function listBooks(): Promise<BookListItem[]> {
 }
 
 export async function getBook(bookId: string): Promise<BookDetails | null> {
-  const store = await readStore()
-  const index = store.books.findIndex((book) => book.id === bookId)
-  if (index === -1) return null
+  const current = await storeAdapter.getBook(bookId)
+  if (!current) return null
 
-  const updated = reconcileProgress(store.books[index])
-  if (updated !== store.books[index]) {
-    store.books[index] = updated
-    await writeStore(store)
+  const updated = reconcileProgress(current)
+  if (updated !== current) {
+    await storeAdapter.saveBook(updated)
   }
 
   return mapToDetails(updated)
 }
 
-export async function createBook(input: {
-  title: string
-  author: string
-  language: string
-  file: File
-}): Promise<BookDetails> {
-  const store = await readStore()
+export async function getBookStatus(bookId: string): Promise<BookStatusSnapshot | null> {
+  const current = await storeAdapter.getBook(bookId)
+  if (!current) return null
+
+  const updated = reconcileProgress(current)
+  if (updated !== current) {
+    await storeAdapter.saveBook(updated)
+  }
+
+  return makeStatusSnapshot(updated)
+}
+
+export async function listBookChapters(bookId: string): Promise<Chapter[] | null> {
+  const current = await storeAdapter.getBook(bookId)
+  if (!current) return null
+
+  const updated = reconcileProgress(current)
+  if (updated !== current) {
+    await storeAdapter.saveBook(updated)
+  }
+
+  return updated.chaptersList
+}
+
+export async function createBook(input: CreateBookInput): Promise<BookDetails> {
+  await ensureUploadsDir()
+  const existingBooks = await storeAdapter.listBooks()
+
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
   const ext = path.extname(input.file.name) || ".bin"
-  const fileName = `${id}${ext}`
-  const filePath = path.join(UPLOADS_DIR, fileName)
+  const storedFileName = `${id}${ext}`
+  const filePath = path.join(UPLOADS_DIR, storedFileName)
   const buffer = Buffer.from(await input.file.arrayBuffer())
   await writeFile(filePath, buffer)
 
   const textContent = ext.toLowerCase() === ".txt" ? buffer.toString("utf8") : ""
-  const chapterCount = estimateChapterCount(input.file.name, textContent)
-  const chaptersList: Chapter[] = Array.from({ length: chapterCount }, (_, index) => ({
+  const chapterSeeds = buildChapterSeeds(input.file.name, textContent)
+  const chaptersList: Chapter[] = chapterSeeds.map((seed, index) => ({
     id: `${id}-chapter-${index + 1}`,
-    name: chapterName(index),
+    name: seed.name || `Chapter ${index + 1}`,
     status: index === 0 ? "processing" : "pending",
     duration: null,
   }))
@@ -210,11 +231,12 @@ export async function createBook(input: {
     author: input.author.trim(),
     language: input.language.trim(),
     fileName: input.file.name,
+    storedFileName,
     fileType: input.file.type || "application/octet-stream",
     fileSize: input.file.size,
     status: "processing",
     progress: 0,
-    coverColor: COVER_COLORS[store.books.length % COVER_COLORS.length],
+    coverColor: COVER_COLORS[existingBooks.length % COVER_COLORS.length],
     chaptersList,
     voiceId: null,
     voiceName: null,
@@ -223,8 +245,7 @@ export async function createBook(input: {
     updatedAt: now,
   }
 
-  store.books.push(book)
-  await writeStore(store)
+  await storeAdapter.saveBook(book)
   return mapToDetails(book)
 }
 
@@ -233,11 +254,9 @@ export async function startGeneration(input: {
   voiceId: string
   voiceName: string
 }): Promise<BookDetails | null> {
-  const store = await readStore()
-  const index = store.books.findIndex((book) => book.id === input.bookId)
-  if (index === -1) return null
+  const current = await storeAdapter.getBook(input.bookId)
+  if (!current) return null
 
-  const current = store.books[index]
   const resetChapters = current.chaptersList.map((chapter, chapterIndex) => ({
     ...chapter,
     status: chapterIndex === 0 ? "processing" : ("pending" as ChapterStatus),
@@ -255,7 +274,6 @@ export async function startGeneration(input: {
     updatedAt: new Date().toISOString(),
   }
 
-  store.books[index] = updated
-  await writeStore(store)
+  await storeAdapter.saveBook(updated)
   return mapToDetails(updated)
 }
