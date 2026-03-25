@@ -74,10 +74,10 @@ npm install
 pnpm dev
 
 # Build for production
-pnpm build
+npm run build
 
 # Start production server
-pnpm start
+npm start
 ```
 
 The application runs at `http://localhost:3000`.
