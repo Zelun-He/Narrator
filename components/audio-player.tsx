@@ -22,6 +22,8 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ title, chapter, duration, currentTime }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isShuffle, setIsShuffle] = useState(false)
+  const [isRepeat, setIsRepeat] = useState(false)
   const [progress, setProgress] = useState([35])
   const [volume, setVolume] = useState([75])
 
@@ -47,8 +49,17 @@ export function AudioPlayer({ title, chapter, duration, currentTime }: AudioPlay
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Button variant="ghost" size="icon-sm" aria-label="Shuffle">
-          <Shuffle className="size-3.5 text-muted-foreground" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Shuffle"
+          onClick={() => setIsShuffle(!isShuffle)}
+          className="relative flex items-center justify-center"
+        >
+          <Shuffle
+            className={`size-3.5 transition-colors ${isShuffle ? "text-[#A78BFA]" : "text-muted-foreground"
+              }`}
+          />
         </Button>
         <Button variant="ghost" size="icon" aria-label="Previous chapter">
           <SkipBack className="size-4" />
@@ -68,8 +79,17 @@ export function AudioPlayer({ title, chapter, duration, currentTime }: AudioPlay
         <Button variant="ghost" size="icon" aria-label="Next chapter">
           <SkipForward className="size-4" />
         </Button>
-        <Button variant="ghost" size="icon-sm" aria-label="Repeat">
-          <Repeat className="size-3.5 text-muted-foreground" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Repeat"
+          onClick={() => setIsRepeat(!isRepeat)}
+          className="relative flex items-center justify-center"
+        >
+          <Repeat
+            className={`size-3.5 transition-colors ${isRepeat ? "text-[#A78BFA]" : "text-muted-foreground"
+              }`}
+          />
         </Button>
       </div>
 
