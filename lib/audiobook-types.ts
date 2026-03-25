@@ -19,6 +19,7 @@ export interface BookListItem {
   progress: number
   coverColor: string
   createdAt: string
+  voiceId: string | null
   voiceName: string | null
 }
 

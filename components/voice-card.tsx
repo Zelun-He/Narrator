@@ -14,6 +14,7 @@ interface VoiceCardProps {
   gender: string
   selected: boolean
   onSelect: (id: string) => void
+  previewOnly?: boolean
 }
 
 export function VoiceCard({
@@ -24,6 +25,7 @@ export function VoiceCard({
   gender,
   selected,
   onSelect,
+  previewOnly = false,
 }: VoiceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
 
@@ -38,10 +40,13 @@ export function VoiceCard({
   return (
     <Card
       className={cn(
-        "saas-surface cursor-pointer border-white/40 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20",
+        "saas-surface border-white/40 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20",
+        !previewOnly && "cursor-pointer",
         selected && "border-[#4ECDC4] ring-2 ring-[#4ECDC4]/20"
       )}
-      onClick={() => onSelect(id)}
+      onClick={() => {
+        if (!previewOnly) onSelect(id)
+      }}
     >
       <CardContent className="flex items-center gap-4 pt-0">
         <div className={cn(

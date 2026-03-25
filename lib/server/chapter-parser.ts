@@ -5,6 +5,20 @@ export interface ChapterSeed {
   content: string
 }
 
+export type ChapterParseStrategy = "heading" | "paragraph" | "default"
+
+export interface ChapterParseSourceStats {
+  characterCount: number
+  paragraphCount: number
+  headingCount: number
+}
+
+export interface ChapterParseResult {
+  chapters: ChapterSeed[]
+  strategy: ChapterParseStrategy
+  sourceStats: ChapterParseSourceStats
+}
+
 const DEFAULT_CHAPTER_COUNT = 10
 const MAX_CHAPTERS = 50
 const MIN_CHUNK_SIZE = 2800
@@ -69,17 +83,52 @@ function splitByHeadings(text: string): ChapterSeed[] {
   return chapters.slice(0, MAX_CHAPTERS)
 }
 
-export function buildChapterSeeds(fileName: string, textContent: string): ChapterSeed[] {
+function getSourceStats(textContent: string): ChapterParseSourceStats {
+  const clean = textContent.replace(/\r\n/g, "\n").trim()
+  const heading = /^\s*((chapter|part|section)\s+[\w\-.:]+.*?)\s*$/gim
+
+  const headingCount = [...clean.matchAll(heading)].length
+  const paragraphCount = clean
+    ? clean
+        .split(/\n{2,}/)
+        .map((part) => part.trim())
+        .filter(Boolean).length
+    : 0
+
+  return {
+    characterCount: clean.length,
+    paragraphCount,
+    headingCount,
+  }
+}
+
+export function buildChapterSeeds(fileName: string, textContent: string): ChapterParseResult {
   const ext = path.extname(fileName).toLowerCase()
+  const sourceStats = getSourceStats(textContent)
 
   if (ext === ".txt") {
     const headingSplit = splitByHeadings(textContent)
-    if (headingSplit.length > 0) return headingSplit
-    return chunkByParagraphs(textContent)
+    if (headingSplit.length > 0) {
+      return {
+        chapters: headingSplit,
+        strategy: "heading",
+        sourceStats,
+      }
+    }
+
+    return {
+      chapters: chunkByParagraphs(textContent),
+      strategy: "paragraph",
+      sourceStats,
+    }
   }
 
-  return Array.from({ length: DEFAULT_CHAPTER_COUNT }, (_, index) => ({
-    name: `Chapter ${index + 1}`,
-    content: "",
-  }))
+  return {
+    chapters: Array.from({ length: DEFAULT_CHAPTER_COUNT }, (_, index) => ({
+      name: `Chapter ${index + 1}`,
+      content: "",
+    })),
+    strategy: "default",
+    sourceStats,
+  }
 }

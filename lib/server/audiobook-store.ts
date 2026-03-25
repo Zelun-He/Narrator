@@ -23,6 +23,8 @@ interface CreateBookInput {
   author: string
   language: string
   file: File
+  voiceId: string
+  voiceName: string
 }
 
 export interface BookStatusSnapshot {
@@ -39,6 +41,10 @@ export interface BookStatusSnapshot {
   activeChapter: Chapter | null
   startedAt: string | null
   updatedAt: string
+  parserMetadata?: {
+    strategy?: BookRecord["parserStrategy"]
+    sourceStats?: BookRecord["parserSourceStats"]
+  }
 }
 
 function getDurationLabel(seconds: number): string {
@@ -58,6 +64,7 @@ function mapToListItem(book: BookRecord): BookListItem {
     progress: book.progress,
     coverColor: book.coverColor,
     createdAt: book.createdAt,
+    voiceId: book.voiceId,
     voiceName: book.voiceName,
   }
 }
@@ -157,6 +164,13 @@ function makeStatusSnapshot(book: BookRecord): BookStatusSnapshot {
     activeChapter: book.chaptersList.find((chapter) => chapter.status === "processing") ?? null,
     startedAt: book.generationStartedAt,
     updatedAt: book.updatedAt,
+    parserMetadata:
+      book.parserStrategy || book.parserSourceStats
+        ? {
+            strategy: book.parserStrategy,
+            sourceStats: book.parserSourceStats,
+          }
+        : undefined,
   }
 }
 
@@ -217,8 +231,8 @@ export async function createBook(input: CreateBookInput): Promise<BookDetails> {
   await writeFile(filePath, buffer)
 
   const textContent = ext.toLowerCase() === ".txt" ? buffer.toString("utf8") : ""
-  const chapterSeeds = buildChapterSeeds(input.file.name, textContent)
-  const chaptersList: Chapter[] = chapterSeeds.map((seed, index) => ({
+  const parseResult = buildChapterSeeds(input.file.name, textContent)
+  const chaptersList: Chapter[] = parseResult.chapters.map((seed, index) => ({
     id: `${id}-chapter-${index + 1}`,
     name: seed.name || `Chapter ${index + 1}`,
     status: index === 0 ? "processing" : "pending",
@@ -238,8 +252,10 @@ export async function createBook(input: CreateBookInput): Promise<BookDetails> {
     progress: 0,
     coverColor: COVER_COLORS[existingBooks.length % COVER_COLORS.length],
     chaptersList,
-    voiceId: null,
-    voiceName: null,
+    parserStrategy: parseResult.strategy,
+    parserSourceStats: parseResult.sourceStats,
+    voiceId: input.voiceId,
+    voiceName: input.voiceName,
     generationStartedAt: null,
     createdAt: now,
     updatedAt: now,
