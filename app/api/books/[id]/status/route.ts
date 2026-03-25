@@ -7,6 +7,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const generatedAt = new Date().toISOString()
   const { id } = await params
   const status = await getBookStatus(id)
 
@@ -14,5 +15,12 @@ export async function GET(
     return NextResponse.json({ error: "Book not found." }, { status: 404 })
   }
 
-  return NextResponse.json({ status })
+  return NextResponse.json({
+    status,
+    apiVersion: "2026-03-25",
+    generatedAt,
+    bookId: status.bookId,
+    updatedAt: status.updatedAt,
+    revision: Date.parse(status.updatedAt),
+  })
 }
