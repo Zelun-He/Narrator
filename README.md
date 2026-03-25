@@ -142,6 +142,9 @@ Narrator/
 - **Audio Generation**: Currently simulated based on elapsed time. To make it real, integrate an AI TTS service (ElevenLabs, PlayHT, Azure Speech) in the `startGeneration()` function in `lib/server/audiobook-store.ts`.
 - **Storage**: Uses JSON file storage by default. Set `NARRATOR_STORAGE_BACKEND=sqlite` to store records in `data/books.sqlite`.
 - **Data Location**: Books are stored in `data/books.json`, uploads in `data/uploads/`.
+- **Storage Migration Script**: Use `scripts/migrate-storage.ts` to copy records between JSON and SQLite and validate counts/IDs.
+  - JSON ➜ SQLite: `node --experimental-strip-types scripts/migrate-storage.ts --from=json --to=sqlite`
+  - SQLite ➜ JSON: `node --experimental-strip-types scripts/migrate-storage.ts --from=sqlite --to=json`
 
 ## Contribution Guidelines
 
