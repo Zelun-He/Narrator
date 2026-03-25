@@ -5,6 +5,7 @@ import { BookRecord, StoreData } from "@/lib/server/store-types"
 const DATA_DIR = path.join(process.cwd(), "data")
 const STORE_FILE = path.join(DATA_DIR, "books.json")
 const SQLITE_FILE = path.join(DATA_DIR, "books.sqlite")
+const SQLITE_INSERT_BATCH_SIZE = 100
 
 interface StoreAdapter {
   listBooks(): Promise<BookRecord[]>
@@ -81,6 +82,9 @@ class SqliteStoreAdapter implements StoreAdapter {
     const { DatabaseSync } = await import("node:sqlite")
     const db = new DatabaseSync(SQLITE_FILE)
     try {
+      db.exec("PRAGMA journal_mode = WAL")
+      db.exec("PRAGMA busy_timeout = 5000")
+      db.exec("PRAGMA synchronous = NORMAL")
       db.exec(`
         CREATE TABLE IF NOT EXISTS books (
           id TEXT PRIMARY KEY,
@@ -131,16 +135,28 @@ class SqliteStoreAdapter implements StoreAdapter {
 
   async saveBooks(books: BookRecord[]): Promise<void> {
     await this.withDb((db) => {
-      const del = db.prepare("DELETE FROM books")
-      del.run()
+      db.exec("BEGIN IMMEDIATE")
 
-      const ins = db.prepare(`
-        INSERT INTO books (id, payload, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
-      `)
+      try {
+        const del = db.prepare("DELETE FROM books")
+        del.run()
 
-      for (const book of books) {
-        ins.run(book.id, JSON.stringify(book), book.createdAt, book.updatedAt)
+        const ins = db.prepare(`
+          INSERT INTO books (id, payload, created_at, updated_at)
+          VALUES (?, ?, ?, ?)
+        `)
+
+        for (let i = 0; i < books.length; i += SQLITE_INSERT_BATCH_SIZE) {
+          const batch = books.slice(i, i + SQLITE_INSERT_BATCH_SIZE)
+          for (const book of batch) {
+            ins.run(book.id, JSON.stringify(book), book.createdAt, book.updatedAt)
+          }
+        }
+
+        db.exec("COMMIT")
+      } catch (error) {
+        db.exec("ROLLBACK")
+        throw error
       }
     })
   }

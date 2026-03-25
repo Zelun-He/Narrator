@@ -120,6 +120,82 @@ Narrator/
 | GET | `/api/books/[id]/status` | Get live status snapshot for one book |
 | GET | `/api/books/[id]/chapters` | List chapter statuses (optional `?status=` filter) |
 
+### Response Envelopes for Polling Endpoints
+
+The `/api/books/[id]/status` and `/api/books/[id]/chapters` endpoints now include additive envelope metadata for stable client polling while preserving existing fields.
+
+#### `GET /api/books/[id]/status`
+
+Sample response:
+
+```json
+{
+  "status": {
+    "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
+    "status": "processing",
+    "progress": 42,
+    "chapterStats": {
+      "total": 12,
+      "completed": 5,
+      "processing": 1,
+      "pending": 6,
+      "failed": 0
+    },
+    "activeChapter": {
+      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-6",
+      "name": "Chapter 6",
+      "status": "processing",
+      "duration": null
+    },
+    "startedAt": "2026-03-25T10:11:12.000Z",
+    "updatedAt": "2026-03-25T10:12:13.000Z"
+  },
+  "apiVersion": "2026-03-25",
+  "generatedAt": "2026-03-25T10:12:13.100Z",
+  "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
+  "updatedAt": "2026-03-25T10:12:13.000Z",
+  "revision": 1774433533000
+}
+```
+
+#### `GET /api/books/[id]/chapters`
+
+Sample response:
+
+```json
+{
+  "chapters": [
+    {
+      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-1",
+      "name": "Chapter 1",
+      "status": "completed",
+      "duration": "8:00"
+    },
+    {
+      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-2",
+      "name": "Chapter 2",
+      "status": "processing",
+      "duration": null
+    }
+  ],
+  "apiVersion": "2026-03-25",
+  "generatedAt": "2026-03-25T10:12:13.100Z",
+  "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
+  "updatedAt": "2026-03-25T10:12:13.000Z",
+  "revision": 1774433533000
+}
+```
+
+#### Added envelope fields
+
+- `apiVersion` (`string`): API envelope version for client compatibility checks.
+- `generatedAt` (`string`, ISO 8601): server timestamp when the response payload was generated.
+- `bookId` (`string`): stable identifier of the requested book at the top level.
+- `updatedAt` (`string`, ISO 8601): latest `BookRecord.updatedAt` value for change detection.
+- `revision` (`number`): epoch-millisecond numeric revision derived from `updatedAt` for efficient monotonic polling comparisons.
+
+> Backward compatibility note: existing `status` and `chapters` fields are unchanged and remain present.
+
 ## User Flow
 
 1. **Upload**: User uploads manuscript (PDF/DOCX/TXT) with title, author, and language
@@ -142,6 +218,9 @@ Narrator/
 - **Audio Generation**: Currently simulated based on elapsed time. To make it real, integrate an AI TTS service (ElevenLabs, PlayHT, Azure Speech) in the `startGeneration()` function in `lib/server/audiobook-store.ts`.
 - **Storage**: Uses JSON file storage by default. Set `NARRATOR_STORAGE_BACKEND=sqlite` to store records in `data/books.sqlite`.
 - **Data Location**: Books are stored in `data/books.json`, uploads in `data/uploads/`.
+- **Storage Migration Script**: Use `scripts/migrate-storage.ts` to copy records between JSON and SQLite and validate counts/IDs.
+  - JSON ➜ SQLite: `node --experimental-strip-types scripts/migrate-storage.ts --from=json --to=sqlite`
+  - SQLite ➜ JSON: `node --experimental-strip-types scripts/migrate-storage.ts --from=sqlite --to=json`
 
 ## Contribution Guidelines
 
