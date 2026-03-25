@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FileUploadZone } from "@/components/file-upload-zone"
+import { VOICE_OPTIONS } from "@/lib/voice-options"
 
 const languages = [
   "English",
@@ -34,10 +35,11 @@ export default function UploadPage() {
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
   const [language, setLanguage] = useState("")
+  const [voiceId, setVoiceId] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isFormValid = file && title && author && language
+  const isFormValid = file && title && author && language && voiceId
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +54,7 @@ export default function UploadPage() {
       formData.append("title", title)
       formData.append("author", author)
       formData.append("language", language)
+      formData.append("voiceId", voiceId)
 
       const response = await fetch("/api/books", {
         method: "POST",
@@ -130,6 +133,21 @@ export default function UploadPage() {
                   {languages.map((lang) => (
                     <SelectItem key={lang} value={lang.toLowerCase()}>
                       {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="voice">Narrator Voice</Label>
+              <Select value={voiceId} onValueChange={setVoiceId}>
+                <SelectTrigger id="voice">
+                  <SelectValue placeholder="Select narrator voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VOICE_OPTIONS.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>
+                      {voice.name} ({voice.accent})
                     </SelectItem>
                   ))}
                 </SelectContent>

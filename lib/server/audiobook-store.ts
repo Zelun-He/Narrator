@@ -23,6 +23,8 @@ interface CreateBookInput {
   author: string
   language: string
   file: File
+  voiceId: string
+  voiceName: string
 }
 
 export interface BookStatusSnapshot {
@@ -62,6 +64,7 @@ function mapToListItem(book: BookRecord): BookListItem {
     progress: book.progress,
     coverColor: book.coverColor,
     createdAt: book.createdAt,
+    voiceId: book.voiceId,
     voiceName: book.voiceName,
   }
 }
@@ -255,8 +258,8 @@ export async function createBook(input: CreateBookInput): Promise<BookDetails> {
     chaptersList,
     parserStrategy: parseResult.strategy,
     parserSourceStats: parseResult.sourceStats,
-    voiceId: null,
-    voiceName: null,
+    voiceId: input.voiceId,
+    voiceName: input.voiceName,
     generationStartedAt: null,
     createdAt: now,
     updatedAt: now,
