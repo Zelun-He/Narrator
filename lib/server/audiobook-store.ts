@@ -39,6 +39,10 @@ export interface BookStatusSnapshot {
   activeChapter: Chapter | null
   startedAt: string | null
   updatedAt: string
+  parserMetadata?: {
+    strategy?: BookRecord["parserStrategy"]
+    sourceStats?: BookRecord["parserSourceStats"]
+  }
 }
 
 export interface BookChaptersSnapshot {
@@ -163,6 +167,13 @@ function makeStatusSnapshot(book: BookRecord): BookStatusSnapshot {
     activeChapter: book.chaptersList.find((chapter) => chapter.status === "processing") ?? null,
     startedAt: book.generationStartedAt,
     updatedAt: book.updatedAt,
+    parserMetadata:
+      book.parserStrategy || book.parserSourceStats
+        ? {
+            strategy: book.parserStrategy,
+            sourceStats: book.parserSourceStats,
+          }
+        : undefined,
   }
 }
 
@@ -227,8 +238,8 @@ export async function createBook(input: CreateBookInput): Promise<BookDetails> {
   await writeFile(filePath, buffer)
 
   const textContent = ext.toLowerCase() === ".txt" ? buffer.toString("utf8") : ""
-  const chapterSeeds = buildChapterSeeds(input.file.name, textContent)
-  const chaptersList: Chapter[] = chapterSeeds.map((seed, index) => ({
+  const parseResult = buildChapterSeeds(input.file.name, textContent)
+  const chaptersList: Chapter[] = parseResult.chapters.map((seed, index) => ({
     id: `${id}-chapter-${index + 1}`,
     name: seed.name || `Chapter ${index + 1}`,
     status: index === 0 ? "processing" : "pending",
@@ -248,6 +259,8 @@ export async function createBook(input: CreateBookInput): Promise<BookDetails> {
     progress: 0,
     coverColor: COVER_COLORS[existingBooks.length % COVER_COLORS.length],
     chaptersList,
+    parserStrategy: parseResult.strategy,
+    parserSourceStats: parseResult.sourceStats,
     voiceId: null,
     voiceName: null,
     generationStartedAt: null,
