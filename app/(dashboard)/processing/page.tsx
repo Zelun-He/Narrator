@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { BookDetails, ChapterStatus } from "@/lib/audiobook-types"
 
+function chapterStatusSignature(book: BookDetails | null): string {
+  if (!book) return "none"
+  return `${book.status}:${book.progress}:${book.chaptersList.map((c) => c.status).join("|")}`
+}
+
 function StatusIcon({ status }: { status: ChapterStatus }) {
   switch (status) {
     case "completed":
@@ -51,21 +56,43 @@ function ProcessingPageContent() {
     }
 
     let mounted = true
+    let intervalId: ReturnType<typeof setInterval> | null = null
     const loadBook = async () => {
-      const response = await fetch(`/api/books/${bookId}`, { cache: "no-store" })
-      if (!response.ok) return
-      const data = (await response.json()) as { book: BookDetails }
-      if (mounted) {
-        setBook(data.book)
+      try {
+        const response = await fetch(`/api/books/${bookId}`, { cache: "no-store" })
+        if (!response.ok) {
+          if (mounted) setLoading(false)
+          return
+        }
+
+        const data = (await response.json()) as { book: BookDetails }
+        if (!mounted) return
+
+        setBook((prev) => {
+          if (chapterStatusSignature(prev) === chapterStatusSignature(data.book)) {
+            return prev
+          }
+          return data.book
+        })
         setLoading(false)
+
+        // Stop polling once complete to prevent unnecessary rerenders.
+        if (data.book.status === "completed" && intervalId) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
+      } catch {
+        if (mounted) setLoading(false)
       }
     }
 
-    loadBook()
-    const interval = setInterval(loadBook, 2000)
+    void loadBook()
+    intervalId = setInterval(() => {
+      void loadBook()
+    }, 2000)
     return () => {
       mounted = false
-      clearInterval(interval)
+      if (intervalId) clearInterval(intervalId)
     }
   }, [bookId])
 
