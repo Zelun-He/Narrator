@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createBook, listBooks } from "@/lib/server/audiobook-store"
+import { VOICE_OPTIONS } from "@/lib/voice-options"
 
 export const runtime = "nodejs"
 
@@ -20,13 +21,19 @@ export async function POST(request: Request) {
   const title = String(formData.get("title") ?? "").trim()
   const author = String(formData.get("author") ?? "").trim()
   const language = String(formData.get("language") ?? "").trim()
+  const voiceId = String(formData.get("voiceId") ?? "").trim()
   const file = formData.get("file")
 
-  if (!title || !author || !language) {
+  if (!title || !author || !language || !voiceId) {
     return NextResponse.json(
-      { error: "Book title, author name, and language are required." },
+      { error: "Book title, author name, language, and narrator voice are required." },
       { status: 400 }
     )
+  }
+
+  const selectedVoice = VOICE_OPTIONS.find((voice) => voice.id === voiceId)
+  if (!selectedVoice) {
+    return NextResponse.json({ error: "Selected narrator voice is invalid." }, { status: 400 })
   }
 
   if (!(file instanceof File)) {
@@ -40,6 +47,13 @@ export async function POST(request: Request) {
     )
   }
 
-  const book = await createBook({ title, author, language, file })
+  const book = await createBook({
+    title,
+    author,
+    language,
+    file,
+    voiceId: selectedVoice.id,
+    voiceName: selectedVoice.name,
+  })
   return NextResponse.json({ book }, { status: 201 })
 }
