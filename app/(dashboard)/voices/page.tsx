@@ -2,22 +2,13 @@
 
 export const dynamic = "force-dynamic"
 
-import { Suspense, useState } from "react"
-import { useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VoiceCard } from "@/components/voice-card"
-
-const voices = [
-  {
-    id: "1",
-    name: "Lessac (Default)",
-    description: "Clear, natural voice perfect for narrating any audiobook genre.",
-    accent: "American",
-    gender: "Neutral",
-  },
-]
+import { VOICE_OPTIONS } from "@/lib/voice-options"
+import type { BookDetails } from "@/lib/audiobook-types"
 
 function VoicesPageContent() {
   const router = useRouter()
