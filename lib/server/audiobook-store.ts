@@ -230,14 +230,12 @@ export async function deleteBook(bookId: string): Promise<boolean> {
 }
 
 export async function getBookRecord(bookId: string): Promise<BookRecord | null> {
-  const store = await readStore()
-  const index = store.books.findIndex((book) => book.id === bookId)
-  if (index === -1) return null
+  const current = await storeAdapter.getBook(bookId)
+  if (!current) return null
 
-  const updated = reconcileProgress(store.books[index])
-  if (updated !== store.books[index]) {
-    store.books[index] = updated
-    await writeStore(store)
+  const updated = reconcileProgress(current)
+  if (updated !== current) {
+    await storeAdapter.saveBook(updated)
   }
 
   return updated
@@ -248,13 +246,16 @@ export async function createBook(input: {
   author: string
   language: string
   file: File
+  voiceId: string
+  voiceName: string
 }): Promise<BookDetails> {
-  const store = await readStore()
+  const existingBooks = await storeAdapter.listBooks()
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
   const ext = path.extname(input.file.name) || ".bin"
   const storedFileName = `${id}${ext}`
   const filePath = path.join(UPLOADS_DIR, storedFileName)
+  await ensureUploadsDir()
   const buffer = Buffer.from(await input.file.arrayBuffer())
   await writeFile(filePath, buffer)
 
@@ -272,7 +273,8 @@ export async function createBook(input: {
     title: input.title.trim(),
     author: input.author.trim(),
     language: input.language.trim(),
-    fileName: fileName,
+    fileName: input.file.name,
+    storedFileName,
     fileType: input.file.type || "application/octet-stream",
     fileSize: input.file.size,
     status: "processing",
@@ -327,11 +329,8 @@ export async function updateChapterAudioUrl(input: {
   audioUrl: string
   duration: number
 }): Promise<boolean> {
-  const store = await readStore()
-  const bookIndex = store.books.findIndex((book) => book.id === input.bookId)
-  if (bookIndex === -1) return false
-
-  const book = store.books[bookIndex]
+  const book = await storeAdapter.getBook(input.bookId)
+  if (!book) return false
   const chapterIndex = book.chaptersList.findIndex((ch) => ch.id === input.chapterId)
   if (chapterIndex === -1) return false
 
@@ -356,7 +355,6 @@ export async function updateChapterAudioUrl(input: {
   }
 
   book.updatedAt = new Date().toISOString()
-  store.books[bookIndex] = book
-  await writeStore(store)
+  await storeAdapter.saveBook(book)
   return true
 }
