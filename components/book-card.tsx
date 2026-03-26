@@ -2,6 +2,7 @@
 
 import { BookOpen, MoreHorizontal, Play } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -22,6 +23,7 @@ interface BookCardProps {
   chapters: number
   progress: number
   coverColor: string
+  onDelete?: (bookId: string) => Promise<void> | void
 }
 
 function getStatusBadge(status: BookStatus) {
@@ -47,7 +49,19 @@ function getStatusBadge(status: BookStatus) {
   }
 }
 
-export function BookCard({ id, title, author, status, chapters, progress, coverColor }: BookCardProps) {
+export function BookCard({ id, title, author, status, chapters, progress, coverColor, onDelete }: BookCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (!onDelete || isDeleting) return
+    setIsDeleting(true)
+    try {
+      await onDelete(id)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <Card className="saas-surface group relative overflow-hidden border-white/40 transition-all hover:-translate-y-0.5">
       <div
@@ -82,7 +96,16 @@ export function BookCard({ id, title, author, status, chapters, progress, coverC
             <DropdownMenuContent align="end">
               <DropdownMenuItem>View Details</DropdownMenuItem>
               <DropdownMenuItem>Download</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={isDeleting}
+                onSelect={(event) => {
+                  event.preventDefault()
+                  void handleDelete()
+                }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

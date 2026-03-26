@@ -36,6 +36,12 @@ export default function DashboardPage() {
     }
   }, [])
 
+  async function handleDeleteBook(bookId: string) {
+    const response = await fetch(`/api/books/${bookId}`, { method: "DELETE" })
+    if (!response.ok) return
+    setBooks((prev) => prev.filter((book) => book.id !== bookId))
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -70,7 +76,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {books.map((book) => (
-              <BookCard key={book.id} {...book} />
+              <BookCard key={book.id} {...book} onDelete={handleDeleteBook} />
             ))}
           </div>
         )}
