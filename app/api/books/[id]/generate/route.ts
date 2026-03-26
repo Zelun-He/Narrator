@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { startGeneration, getBookRecord } from "@/lib/server/audiobook-store"
 import { extractChaptersFromManuscript } from "@/lib/server/manuscript-processor"
 import { generateAudioForBook } from "@/lib/server/audio-generation-service"
+import { access } from "node:fs/promises"
 import path from "path"
 
 export const runtime = "nodejs"
@@ -23,18 +24,34 @@ export async function POST(
   }
 
   try {
-    // Get book record first to access fileName
+    // Get book record first to access manuscript file metadata.
     const bookRecord = await getBookRecord(id)
     if (!bookRecord) {
       return NextResponse.json({ error: "Book not found." }, { status: 404 })
     }
 
-    // Extract manuscript path from book filename
+    // Prefer stored filename (UUID.ext). Fallback supports older records.
     const UPLOADS_DIR = path.join(process.cwd(), "data", "uploads")
-    const uploadPath = path.join(UPLOADS_DIR, bookRecord.fileName)
+    const manuscriptFileName = bookRecord.storedFileName || bookRecord.fileName
+    const uploadPath = path.join(UPLOADS_DIR, manuscriptFileName)
 
-    // Determine file type from fileName
-    const ext = path.extname(bookRecord.fileName).toLowerCase().slice(1) as "txt" | "pdf" | "docx"
+    try {
+      await access(uploadPath)
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "Original manuscript file is missing for this record. Please re-upload the manuscript and try again.",
+        },
+        { status: 400 }
+      )
+    }
+
+    // Determine file type from original name, falling back to stored file name.
+    const ext = path
+      .extname(bookRecord.fileName || manuscriptFileName)
+      .toLowerCase()
+      .slice(1) as "txt" | "pdf" | "docx"
 
     // Start generation (updates status to processing)
     const book = await startGeneration({ bookId: id, voiceId, voiceName })

@@ -493,6 +493,82 @@
       "generationStartedAt": "2026-03-26T05:15:21.597Z",
       "createdAt": "2026-03-26T05:15:15.677Z",
       "updatedAt": "2026-03-26T05:15:45.878Z"
+    },
+    {
+      "id": "9850748f-e215-4488-8303-b0d5f9c844c7",
+      "title": "Smoke Upload",
+      "author": "Local",
+      "language": "english",
+      "fileName": "4697f073-341f-4411-af00-ec52b2276b7b.txt",
+      "storedFileName": "9850748f-e215-4488-8303-b0d5f9c844c7.txt",
+      "fileType": "text/plain",
+      "fileSize": 1393,
+      "status": "processing",
+      "progress": 0,
+      "coverColor": "#0EA5E9",
+      "chaptersList": [
+        {
+          "id": "9850748f-e215-4488-8303-b0d5f9c844c7-chapter-1",
+          "name": "Chapter 1: A Quiet Morning",
+          "status": "processing",
+          "duration": null
+        },
+        {
+          "id": "9850748f-e215-4488-8303-b0d5f9c844c7-chapter-2",
+          "name": "Chapter 2: The Dream Returns",
+          "status": "pending",
+          "duration": null
+        },
+        {
+          "id": "9850748f-e215-4488-8303-b0d5f9c844c7-chapter-3",
+          "name": "Chapter 3: The Stranger",
+          "status": "pending",
+          "duration": null
+        }
+      ],
+      "parserStrategy": "heading",
+      "parserSourceStats": {
+        "characterCount": 1327,
+        "paragraphCount": 27,
+        "headingCount": 3
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": null,
+      "createdAt": "2026-03-26T16:53:04.660Z",
+      "updatedAt": "2026-03-26T16:53:04.660Z"
+    },
+    {
+      "id": "0cf820ab-f95d-431c-a516-97b93043d090",
+      "title": "aef",
+      "author": "asdf",
+      "language": "english",
+      "fileName": "The Last Train Home.txt",
+      "storedFileName": "0cf820ab-f95d-431c-a516-97b93043d090.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#FF9F43",
+      "chaptersList": [
+        {
+          "id": "0cf820ab-f95d-431c-a516-97b93043d090-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "8:00"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T16:53:50.854Z",
+      "createdAt": "2026-03-26T16:53:30.028Z",
+      "updatedAt": "2026-03-26T16:54:04.646Z"
     }
   ]
 }
