@@ -40,10 +40,16 @@ Narrator is a full-stack web application that converts written manuscripts (PDF,
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Current Product Constraints
+
+- Narration language is currently fixed to `English`.
+- Narrator voice is currently fixed to `Lessac (Default)`.
+- The upload form displays language and narrator as read-only values.
+
 ## Key Features
 
 - **Manuscript Upload**: Support for PDF, DOCX, and TXT files
-- **AI Voice Selection**: Choose from 6 pre-defined AI voices with different accents and tones
+- **Consistent Narration Profile**: Uses one validated narrator profile (`Lessac (Default)`) in English for predictable output
 - **Real-time Progress Tracking**: Live chapter-by-chapter generation progress
 - **Audio Playback**: Built-in player with chapter navigation and playback controls
 - **Download Options**: Export as MP3, M4B audiobook, or ZIP archive
@@ -71,7 +77,7 @@ npm install
 
 ```bash
 # Start development server
-pnpm dev
+npm run dev
 
 # Build for production
 npm run build
@@ -198,18 +204,18 @@ Sample response:
 
 ## User Flow
 
-1. **Upload**: User uploads manuscript (PDF/DOCX/TXT) with title, author, and language
-2. **Voice Selection**: User chooses an AI voice from the selection grid
-3. **Processing**: System generates audiobook chapter-by-chapter with real-time progress
-4. **Playback**: User can listen to the audiobook and download in various formats
+1. **Upload**: User uploads manuscript (PDF/DOCX/TXT) with title and author.
+2. **Narrator Preview**: User can review the narrator page before generation.
+3. **Processing**: System generates audiobook chapter-by-chapter with real-time progress.
+4. **Playback**: User can listen to the audiobook and download in various formats.
 
 ## How to Test
 
-1. Start the development server: `pnpm dev`
+1. Start the development server: `npm run dev`
 2. Open `http://localhost:3000`
 3. Click "Create New Audiobook"
 4. Fill in the form and upload a manuscript file
-5. Select a voice and start generation
+5. Start generation (language and narrator are preconfigured)
 6. Wait for processing to complete
 7. Test the audio player and download options
 
