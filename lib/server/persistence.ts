@@ -12,6 +12,7 @@ interface StoreAdapter {
   getBook(bookId: string): Promise<BookRecord | null>
   saveBook(book: BookRecord): Promise<void>
   saveBooks(books: BookRecord[]): Promise<void>
+  deleteBook(bookId: string): Promise<boolean>
 }
 
 async function ensureDataDir() {
@@ -73,6 +74,17 @@ class JsonStoreAdapter implements StoreAdapter {
 
   async saveBooks(books: BookRecord[]): Promise<void> {
     await this.writeStore({ books })
+  }
+
+  async deleteBook(bookId: string): Promise<boolean> {
+    const store = await this.readStore()
+    const nextBooks = store.books.filter((book) => book.id !== bookId)
+    if (nextBooks.length === store.books.length) {
+      return false
+    }
+
+    await this.writeStore({ books: nextBooks })
+    return true
   }
 }
 
@@ -158,6 +170,14 @@ class SqliteStoreAdapter implements StoreAdapter {
         db.exec("ROLLBACK")
         throw error
       }
+    })
+  }
+
+  async deleteBook(bookId: string): Promise<boolean> {
+    return this.withDb((db) => {
+      const stmt = db.prepare("DELETE FROM books WHERE id = ?")
+      const result = stmt.run(bookId) as { changes?: number }
+      return (result.changes ?? 0) > 0
     })
   }
 }

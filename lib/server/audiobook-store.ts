@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 import crypto from "node:crypto"
 import type {
@@ -211,6 +211,22 @@ export async function getBook(bookId: string): Promise<BookDetails | null> {
   }
 
   return mapToDetails(updated)
+}
+
+export async function deleteBook(bookId: string): Promise<boolean> {
+  const existing = await storeAdapter.getBook(bookId)
+  if (!existing) return false
+
+  const deleted = await storeAdapter.deleteBook(bookId)
+  if (!deleted) return false
+
+  // Best-effort cleanup of uploaded manuscript file.
+  if (existing.storedFileName) {
+    const uploadPath = path.join(UPLOADS_DIR, existing.storedFileName)
+    await rm(uploadPath, { force: true }).catch(() => {})
+  }
+
+  return true
 }
 
 export async function getBookRecord(bookId: string): Promise<BookRecord | null> {
