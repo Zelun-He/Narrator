@@ -50,11 +50,10 @@ export default function UploadPage() {
         return
       }
 
-      router.push(`/processing?bookId=${data.book.id}`)
-
       // Trigger generation without blocking navigation to processing.
       void fetch(`/api/books/${data.book.id}/generate`, {
         method: "POST",
+        keepalive: true,
         headers: {
           "Content-Type": "application/json",
         },
@@ -63,6 +62,13 @@ export default function UploadPage() {
           voiceName: DEFAULT_VOICE_LABEL,
         }),
       })
+
+      const target = `/processing?bookId=${data.book.id}`
+      if (typeof window !== "undefined") {
+        window.location.assign(target)
+      } else {
+        router.push(target)
+      }
     } catch {
       setError("Unexpected network error. Please try again.")
     } finally {

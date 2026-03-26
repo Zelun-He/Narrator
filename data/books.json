@@ -583,6 +583,105 @@
       "generationStartedAt": "2026-03-26T17:24:19.363Z",
       "createdAt": "2026-03-26T17:24:19.219Z",
       "updatedAt": "2026-03-26T17:24:25.532Z"
+    },
+    {
+      "id": "b884693f-8950-40af-848f-11ba3a5fd86d",
+      "title": "Test",
+      "author": "test",
+      "language": "english",
+      "fileName": "china.txt",
+      "storedFileName": "b884693f-8950-40af-848f-11ba3a5fd86d.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#F59E0B",
+      "chaptersList": [
+        {
+          "id": "b884693f-8950-40af-848f-11ba3a5fd86d-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "2:25",
+          "audioUrl": "/audio/book-b884693f-8950-40af-848f-11ba3a5fd86d/chapter-1-b884693f-8950-40af-848f-11ba3a5fd86d-chapter-1.wav"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T17:26:27.597Z",
+      "createdAt": "2026-03-26T17:26:26.813Z",
+      "updatedAt": "2026-03-26T17:26:33.901Z"
+    },
+    {
+      "id": "d1c577b5-e890-441c-b029-727e81ad4c0a",
+      "title": "Test",
+      "author": "TEst",
+      "language": "english",
+      "fileName": "china.txt",
+      "storedFileName": "d1c577b5-e890-441c-b029-727e81ad4c0a.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#A78BFA",
+      "chaptersList": [
+        {
+          "id": "d1c577b5-e890-441c-b029-727e81ad4c0a-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "2:25",
+          "audioUrl": "/audio/book-d1c577b5-e890-441c-b029-727e81ad4c0a/chapter-1-d1c577b5-e890-441c-b029-727e81ad4c0a-chapter-1.wav"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T17:28:09.868Z",
+      "createdAt": "2026-03-26T17:28:08.208Z",
+      "updatedAt": "2026-03-26T17:28:16.678Z"
+    },
+    {
+      "id": "5aa1b31a-60e5-43cb-8ad2-fc2419cae0e3",
+      "title": "The Last Train Home",
+      "author": "Chatgpt",
+      "language": "english",
+      "fileName": "The Last Train Home.txt",
+      "storedFileName": "5aa1b31a-60e5-43cb-8ad2-fc2419cae0e3.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#0EA5E9",
+      "chaptersList": [
+        {
+          "id": "5aa1b31a-60e5-43cb-8ad2-fc2419cae0e3-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "2:26",
+          "audioUrl": "/audio/book-5aa1b31a-60e5-43cb-8ad2-fc2419cae0e3/chapter-1-5aa1b31a-60e5-43cb-8ad2-fc2419cae0e3-chapter-1.wav"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T17:36:37.997Z",
+      "createdAt": "2026-03-26T17:36:37.731Z",
+      "updatedAt": "2026-03-26T17:36:45.038Z"
     }
   ]
 }
