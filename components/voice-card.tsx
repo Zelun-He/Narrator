@@ -28,12 +28,45 @@ export function VoiceCard({
   previewOnly = false,
 }: VoiceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [audioRef] = useState<HTMLAudioElement | null>(null)
 
-  function togglePreview(e: React.MouseEvent) {
+  async function togglePreview(e: React.MouseEvent) {
     e.stopPropagation()
-    setIsPlaying(!isPlaying)
-    if (!isPlaying) {
-      setTimeout(() => setIsPlaying(false), 3000)
+    
+    if (isPlaying) {
+      setIsPlaying(false)
+      return
+    }
+
+    try {
+      setIsPlaying(true)
+      const response = await fetch("/api/voices/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `This is the ${name} voice. Perfect for audiobooks and narration.`,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to generate preview")
+      }
+
+      const audioBlob = await response.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      
+      // Create and play audio element
+      const audio = new Audio(audioUrl)
+      audio.onended = () => {
+        setIsPlaying(false)
+        URL.revokeObjectURL(audioUrl)
+      }
+      audio.play().catch(() => {
+        setIsPlaying(false)
+      })
+    } catch (error) {
+      console.error("Preview error:", error)
+      setIsPlaying(false)
     }
   }
 

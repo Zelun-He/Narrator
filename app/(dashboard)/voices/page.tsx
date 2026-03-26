@@ -8,8 +8,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VoiceCard } from "@/components/voice-card"
-import { VOICE_OPTIONS } from "@/lib/voice-options"
-import type { BookDetails } from "@/lib/audiobook-types"
+
+const voices = [
+  {
+    id: "1",
+    name: "Lessac (Default)",
+    description: "Clear, natural voice perfect for narrating any audiobook genre.",
+    accent: "American",
+    gender: "Neutral",
+  },
+]
 
 function VoicesPageContent() {
   const router = useRouter()

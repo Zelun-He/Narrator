@@ -7,6 +7,11 @@ export interface Chapter {
   name: string
   status: ChapterStatus
   duration: string | null
+  // Audio generation fields
+  textContent?: string      // Extracted chapter text
+  audioUrl?: string         // URL to generated WAV file (/audio/...)
+  audioSize?: number        // File size in bytes
+  generationError?: string  // Error message if generation failed
 }
 
 export interface BookListItem {

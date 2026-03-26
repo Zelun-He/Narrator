@@ -80,6 +80,20 @@ function PlayerPageContent() {
   )
 
   const activeChapter = chapters.find((c) => c.id === currentChapter)
+  const activeChapterData = book?.chaptersList.find((c) => c.id === currentChapter)
+  const currentChapterIndex = book?.chaptersList.findIndex((c) => c.id === currentChapter) ?? -1
+
+  const handlePreviousChapter = () => {
+    if (currentChapterIndex > 0 && book?.chaptersList) {
+      setCurrentChapter(book.chaptersList[currentChapterIndex - 1].id)
+    }
+  }
+
+  const handleNextChapter = () => {
+    if (currentChapterIndex < (book?.chaptersList.length ?? 0) - 1 && book?.chaptersList) {
+      setCurrentChapter(book.chaptersList[currentChapterIndex + 1].id)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -196,8 +210,11 @@ function PlayerPageContent() {
           <AudioPlayer
             title={book?.title ?? "No Audiobook Selected"}
             chapter={activeChapter?.name || ""}
-            duration={activeChapter?.duration || "00:00"}
-            currentTime="04:32"
+            audioUrl={activeChapterData?.audioUrl}
+            duration={activeChapter?.duration || "--:--"}
+            isLoading={activeChapterData?.status === "processing"}
+            onPrevious={handlePreviousChapter}
+            onNext={handleNextChapter}
           />
         </div>
       </div>
