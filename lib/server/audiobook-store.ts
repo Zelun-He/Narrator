@@ -28,6 +28,12 @@ interface BookRecord {
   generationStartedAt: string | null
   createdAt: string
   updatedAt: string
+  // Audio generation fields
+  uploadedFileName?: string
+  uploadedFilePath?: string
+  audioDirectory?: string
+  failedChapters?: string[]
+  generationError?: string
 }
 
 interface StoreData {
@@ -180,6 +186,20 @@ export async function getBook(bookId: string): Promise<BookDetails | null> {
   return mapToDetails(updated)
 }
 
+export async function getBookRecord(bookId: string): Promise<BookRecord | null> {
+  const store = await readStore()
+  const index = store.books.findIndex((book) => book.id === bookId)
+  if (index === -1) return null
+
+  const updated = reconcileProgress(store.books[index])
+  if (updated !== store.books[index]) {
+    store.books[index] = updated
+    await writeStore(store)
+  }
+
+  return updated
+}
+
 export async function createBook(input: {
   title: string
   author: string
@@ -209,7 +229,7 @@ export async function createBook(input: {
     title: input.title.trim(),
     author: input.author.trim(),
     language: input.language.trim(),
-    fileName: input.file.name,
+    fileName: fileName,
     fileType: input.file.type || "application/octet-stream",
     fileSize: input.file.size,
     status: "processing",
@@ -258,4 +278,44 @@ export async function startGeneration(input: {
   store.books[index] = updated
   await writeStore(store)
   return mapToDetails(updated)
+}
+
+export async function updateChapterAudioUrl(input: {
+  bookId: string
+  chapterId: string
+  audioUrl: string
+  duration: number
+}): Promise<boolean> {
+  const store = await readStore()
+  const bookIndex = store.books.findIndex((book) => book.id === input.bookId)
+  if (bookIndex === -1) return false
+
+  const book = store.books[bookIndex]
+  const chapterIndex = book.chaptersList.findIndex((ch) => ch.id === input.chapterId)
+  if (chapterIndex === -1) return false
+
+  // Convert duration (seconds) to MM:SS format
+  const minutes = Math.floor(input.duration / 60)
+  const seconds = Math.round(input.duration % 60)
+  const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`
+
+  // Update the chapter with audio metadata
+  book.chaptersList[chapterIndex] = {
+    ...book.chaptersList[chapterIndex],
+    audioUrl: input.audioUrl,
+    duration: durationString,
+    status: "completed" as ChapterStatus,
+  }
+
+  // Update book status - mark as completed if all chapters are done
+  const allCompleted = book.chaptersList.every((ch) => ch.status === "completed")
+  if (allCompleted) {
+    book.status = "completed"
+    book.progress = 100
+  }
+
+  book.updatedAt = new Date().toISOString()
+  store.books[bookIndex] = book
+  await writeStore(store)
+  return true
 }
