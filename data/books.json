@@ -159,153 +159,6 @@
       "updatedAt": "2026-03-26T03:53:32.188Z"
     },
     {
-      "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75",
-      "title": "Testing",
-      "author": "Taiwan bitch",
-      "language": "english",
-      "fileName": "book.txt",
-      "fileType": "text/plain",
-      "fileSize": 2192,
-      "status": "completed",
-      "progress": 100,
-      "coverColor": "#F59E0B",
-      "chaptersList": [
-        {
-          "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75-chapter-1",
-          "name": "Chapter 1",
-          "status": "completed",
-          "duration": "8:00"
-        },
-        {
-          "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75-chapter-2",
-          "name": "Chapter 2",
-          "status": "completed",
-          "duration": "8:17"
-        },
-        {
-          "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75-chapter-3",
-          "name": "Chapter 3",
-          "status": "completed",
-          "duration": "8:34"
-        },
-        {
-          "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75-chapter-4",
-          "name": "Chapter 4",
-          "status": "completed",
-          "duration": "8:51"
-        },
-        {
-          "id": "3e575bcb-95b7-4aba-a5e2-fcb9fc388a75-chapter-5",
-          "name": "Chapter 5",
-          "status": "completed",
-          "duration": "9:08"
-        }
-      ],
-      "voiceId": "1",
-      "voiceName": "Ava Mitchell",
-      "generationStartedAt": "2026-03-26T04:10:36.754Z",
-      "createdAt": "2026-03-26T04:10:24.918Z",
-      "updatedAt": "2026-03-26T04:13:21.139Z"
-    },
-    {
-      "id": "81ebe532-206b-48ef-827c-ca78f08941fd",
-      "title": "Testing 02",
-      "author": "Taiwan bitch",
-      "language": "english",
-      "fileName": "81ebe532-206b-48ef-827c-ca78f08941fd.txt",
-      "fileType": "text/plain",
-      "fileSize": 2192,
-      "status": "completed",
-      "progress": 100,
-      "coverColor": "#A78BFA",
-      "chaptersList": [
-        {
-          "id": "81ebe532-206b-48ef-827c-ca78f08941fd-chapter-1",
-          "name": "Chapter 1",
-          "status": "completed",
-          "duration": "8:00"
-        },
-        {
-          "id": "81ebe532-206b-48ef-827c-ca78f08941fd-chapter-2",
-          "name": "Chapter 2",
-          "status": "completed",
-          "duration": "8:17"
-        },
-        {
-          "id": "81ebe532-206b-48ef-827c-ca78f08941fd-chapter-3",
-          "name": "Chapter 3",
-          "status": "completed",
-          "duration": "8:34"
-        },
-        {
-          "id": "81ebe532-206b-48ef-827c-ca78f08941fd-chapter-4",
-          "name": "Chapter 4",
-          "status": "completed",
-          "duration": "8:51"
-        },
-        {
-          "id": "81ebe532-206b-48ef-827c-ca78f08941fd-chapter-5",
-          "name": "Chapter 5",
-          "status": "completed",
-          "duration": "9:08"
-        }
-      ],
-      "voiceId": "6",
-      "voiceName": "Marcus Obi",
-      "generationStartedAt": "2026-03-26T04:13:42.761Z",
-      "createdAt": "2026-03-26T04:13:39.573Z",
-      "updatedAt": "2026-03-26T04:14:22.965Z"
-    },
-    {
-      "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22",
-      "title": "Testing 3",
-      "author": "Taiwan bitch",
-      "language": "english",
-      "fileName": "d17e5997-403f-4415-9bb9-5a222b5aaf22.txt",
-      "fileType": "text/plain",
-      "fileSize": 2192,
-      "status": "completed",
-      "progress": 100,
-      "coverColor": "#0EA5E9",
-      "chaptersList": [
-        {
-          "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22-chapter-1",
-          "name": "Chapter 1",
-          "status": "completed",
-          "duration": "8:00"
-        },
-        {
-          "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22-chapter-2",
-          "name": "Chapter 2",
-          "status": "completed",
-          "duration": "8:17"
-        },
-        {
-          "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22-chapter-3",
-          "name": "Chapter 3",
-          "status": "completed",
-          "duration": "8:34"
-        },
-        {
-          "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22-chapter-4",
-          "name": "Chapter 4",
-          "status": "completed",
-          "duration": "8:51"
-        },
-        {
-          "id": "d17e5997-403f-4415-9bb9-5a222b5aaf22-chapter-5",
-          "name": "Chapter 5",
-          "status": "completed",
-          "duration": "9:08"
-        }
-      ],
-      "voiceId": "1",
-      "voiceName": "Lessac (Default)",
-      "generationStartedAt": "2026-03-26T04:26:37.201Z",
-      "createdAt": "2026-03-26T04:26:34.821Z",
-      "updatedAt": "2026-03-26T04:27:17.329Z"
-    },
-    {
       "id": "38c4f2ee-5b59-450d-85d2-4adc7f6e5910",
       "title": "Book 2",
       "author": "Tin Nguyen",
@@ -378,43 +231,6 @@
       "generationStartedAt": "2026-03-26T04:36:11.456Z",
       "createdAt": "2026-03-26T04:35:52.959Z",
       "updatedAt": "2026-03-26T04:36:35.599Z"
-    },
-    {
-      "id": "a0e16944-b692-4944-914f-889a87d5b90c",
-      "title": "asdasd124123",
-      "author": "Taiwan bitch",
-      "language": "english",
-      "fileName": "a0e16944-b692-4944-914f-889a87d5b90c.txt",
-      "fileType": "text/plain",
-      "fileSize": 1393,
-      "status": "completed",
-      "progress": 100,
-      "coverColor": "#4ECDC4",
-      "chaptersList": [
-        {
-          "id": "a0e16944-b692-4944-914f-889a87d5b90c-chapter-1",
-          "name": "Chapter 1",
-          "status": "completed",
-          "duration": "8:00"
-        },
-        {
-          "id": "a0e16944-b692-4944-914f-889a87d5b90c-chapter-2",
-          "name": "Chapter 2",
-          "status": "completed",
-          "duration": "8:17"
-        },
-        {
-          "id": "a0e16944-b692-4944-914f-889a87d5b90c-chapter-3",
-          "name": "Chapter 3",
-          "status": "completed",
-          "duration": "8:34"
-        }
-      ],
-      "voiceId": "1",
-      "voiceName": "Lessac (Default)",
-      "generationStartedAt": "2026-03-26T04:58:40.571Z",
-      "createdAt": "2026-03-26T04:58:37.570Z",
-      "updatedAt": "2026-03-26T04:59:04.787Z"
     },
     {
       "id": "4697f073-341f-4411-af00-ec52b2276b7b",
@@ -537,6 +353,70 @@
       "generationStartedAt": null,
       "createdAt": "2026-03-26T16:53:04.660Z",
       "updatedAt": "2026-03-26T16:53:04.660Z"
+    },
+    {
+      "id": "e26910ff-c7dc-4da9-95a7-001b09b02ad8",
+      "title": "Test",
+      "author": "test",
+      "language": "english",
+      "fileName": "The Last Train Home.txt",
+      "storedFileName": "e26910ff-c7dc-4da9-95a7-001b09b02ad8.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "processing",
+      "progress": 0,
+      "coverColor": "#4ECDC4",
+      "chaptersList": [
+        {
+          "id": "e26910ff-c7dc-4da9-95a7-001b09b02ad8-chapter-1",
+          "name": "Chapter 1",
+          "status": "processing",
+          "duration": null
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": null,
+      "createdAt": "2026-03-26T16:58:21.349Z",
+      "updatedAt": "2026-03-26T16:58:21.349Z"
+    },
+    {
+      "id": "3e134b9c-a4e9-4d83-8db8-149eff67923e",
+      "title": "Test",
+      "author": "test",
+      "language": "english",
+      "fileName": "The Last Train Home.txt",
+      "storedFileName": "3e134b9c-a4e9-4d83-8db8-149eff67923e.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "processing",
+      "progress": 0,
+      "coverColor": "#F59E0B",
+      "chaptersList": [
+        {
+          "id": "3e134b9c-a4e9-4d83-8db8-149eff67923e-chapter-1",
+          "name": "Chapter 1",
+          "status": "processing",
+          "duration": null
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T16:59:28.191Z",
+      "createdAt": "2026-03-26T16:59:27.241Z",
+      "updatedAt": "2026-03-26T16:59:33.203Z"
     }
   ]
 }

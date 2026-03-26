@@ -50,7 +50,24 @@ export default function UploadPage() {
         return
       }
 
-      router.push(`/voices?bookId=${data.book.id}`)
+      const generateResponse = await fetch(`/api/books/${data.book.id}/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          voiceId: DEFAULT_VOICE_ID,
+          voiceName: DEFAULT_VOICE_LABEL,
+        }),
+      })
+
+      const generateData = (await generateResponse.json()) as { error?: string }
+      if (!generateResponse.ok) {
+        setError(generateData.error ?? "Failed to start generation.")
+        return
+      }
+
+      router.push(`/processing?bookId=${data.book.id}`)
     } catch {
       setError("Unexpected network error. Please try again.")
     } finally {
