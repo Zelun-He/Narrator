@@ -517,6 +517,72 @@
       "generationStartedAt": "2026-03-26T17:22:53.019Z",
       "createdAt": "2026-03-26T17:22:52.847Z",
       "updatedAt": "2026-03-26T17:22:59.576Z"
+    },
+    {
+      "id": "987b1c36-6fc4-473e-97c8-2f4bf629c5bd",
+      "title": "adf",
+      "author": "fdg",
+      "language": "english",
+      "fileName": "china.txt",
+      "storedFileName": "987b1c36-6fc4-473e-97c8-2f4bf629c5bd.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#FF6B6B",
+      "chaptersList": [
+        {
+          "id": "987b1c36-6fc4-473e-97c8-2f4bf629c5bd-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "2:25",
+          "audioUrl": "/audio/book-987b1c36-6fc4-473e-97c8-2f4bf629c5bd/chapter-1-987b1c36-6fc4-473e-97c8-2f4bf629c5bd-chapter-1.wav"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T17:24:10.415Z",
+      "createdAt": "2026-03-26T17:24:10.252Z",
+      "updatedAt": "2026-03-26T17:24:16.629Z"
+    },
+    {
+      "id": "3cd63d86-e204-4cf7-98ca-5957cec2117c",
+      "title": "adf",
+      "author": "fdg",
+      "language": "english",
+      "fileName": "china.txt",
+      "storedFileName": "3cd63d86-e204-4cf7-98ca-5957cec2117c.txt",
+      "fileType": "text/plain",
+      "fileSize": 2592,
+      "status": "completed",
+      "progress": 100,
+      "coverColor": "#4ECDC4",
+      "chaptersList": [
+        {
+          "id": "3cd63d86-e204-4cf7-98ca-5957cec2117c-chapter-1",
+          "name": "Chapter 1",
+          "status": "completed",
+          "duration": "2:24",
+          "audioUrl": "/audio/book-3cd63d86-e204-4cf7-98ca-5957cec2117c/chapter-1-3cd63d86-e204-4cf7-98ca-5957cec2117c-chapter-1.wav"
+        }
+      ],
+      "parserStrategy": "paragraph",
+      "parserSourceStats": {
+        "characterCount": 2410,
+        "paragraphCount": 41,
+        "headingCount": 0
+      },
+      "voiceId": "1",
+      "voiceName": "Lessac (Default)",
+      "generationStartedAt": "2026-03-26T17:24:19.363Z",
+      "createdAt": "2026-03-26T17:24:19.219Z",
+      "updatedAt": "2026-03-26T17:24:25.532Z"
     }
   ]
 }
