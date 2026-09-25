@@ -213,6 +213,25 @@ export async function getBook(bookId: string): Promise<BookDetails | null> {
   return mapToDetails(updated)
 }
 
+export async function getBookStatus(bookId: string): Promise<BookStatusSnapshot | null> {
+  const current = await getBookRecord(bookId)
+  return current ? makeStatusSnapshot(current) : null
+}
+
+export async function listBookChapters(
+  bookId: string
+): Promise<{ bookId: string; chapters: Chapter[]; updatedAt: string } | null> {
+  const current = await getBookRecord(bookId)
+
+  if (!current) return null
+
+  return {
+    bookId: current.id,
+    chapters: current.chaptersList,
+    updatedAt: current.updatedAt,
+  }
+}
+
 export async function deleteBook(bookId: string): Promise<boolean> {
   const existing = await storeAdapter.getBook(bookId)
   if (!existing) return false

@@ -82,6 +82,28 @@ npm start
 
 The application runs at `http://localhost:3000`.
 
+## Deploy to Vercel
+
+The project is configured for Vercel's automatic Next.js detection and does not
+require a custom build command. From the repository root, deploy with:
+
+```bash
+npx vercel@latest
+npx vercel@latest --prod
+```
+
+Alternatively, import the repository in the Vercel dashboard and keep the
+detected framework preset set to **Next.js**. No environment variables are
+required to render the bundled demo data.
+
+> **Runtime storage:** Vercel Functions have an ephemeral filesystem. The
+> bundled JSON records and audio are suitable for a demo deployment, but new
+> uploads and generated audio are not durable across function invocations.
+> Connect a persistent database and object-storage provider before using the
+> upload and generation workflow in production. The bundled Piper executable is
+> also Windows-only, so server-side speech generation requires a Linux-compatible
+> TTS service or binary on Vercel.
+
 ## Folder Structure
 
 ```
