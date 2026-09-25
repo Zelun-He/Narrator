@@ -4,7 +4,7 @@
  * Can be used across the application for consistent audio generation
  */
 
-import { generateTts, getPiperConfig, PiperConfig, TtsGenerationOptions, TtsResult } from './piper';
+import { generateTts, getPiperConfig } from './piper';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,22 +18,10 @@ export interface AudioMetadata {
 }
 
 class TtsService {
-  private config: PiperConfig;
   private audioDir: string;
 
   constructor() {
-    this.config = getPiperConfig();
     this.audioDir = path.join(process.cwd(), 'public', 'audio');
-    this.ensureAudioDirectory();
-  }
-
-  /**
-   * Ensures audio directory exists
-   */
-  private ensureAudioDirectory(): void {
-    if (!fs.existsSync(this.audioDir)) {
-      fs.mkdirSync(this.audioDir, { recursive: true });
-    }
   }
 
   /**
@@ -43,7 +31,7 @@ class TtsService {
   async generateStreamingAudio(text: string): Promise<Buffer> {
     const result = await generateTts(
       { text },
-      this.config
+      getPiperConfig()
     );
 
     if (!result.success) {
@@ -70,7 +58,7 @@ class TtsService {
         text,
         outputPath,
       },
-      this.config
+      getPiperConfig()
     );
 
     if (!result.success) {
