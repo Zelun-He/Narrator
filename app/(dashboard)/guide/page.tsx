@@ -16,7 +16,7 @@ export default function GuidePage() {
           {
             n: "01",
             title: "Upload your book",
-            text: "Add your manuscript, title, and author name. English TXT files work best; PDF and DOCX extraction is experimental.",
+            text: "Add your manuscript, title, and author name. TXT, DOCX, and text-based PDF are supported. Scanned PDFs need OCR first.",
           },
           {
             n: "02",

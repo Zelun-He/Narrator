@@ -1,284 +1,88 @@
-# Narrator - AI Audiobook Generator
+# Narrator
 
-A free audiobook studio for authors. Upload a manuscript, review your narrator, and listen chapter by chapter.
+A free, self-hosted author studio: create an account, upload your manuscript, and turn it into an audiobook. The storybook interface includes a private bookshelf, narrator preview, chapter progress and a listening room. There are no paid TTS APIs or subscriptions.
 
-## Project Overview
+## Run with Docker
 
-Narrator is a full-stack web application that converts written manuscripts (PDF, DOCX, TXT) into professionally narrated audiobooks using AI voice synthesis. The application provides a complete workflow from manuscript upload to audio playback with chapter navigation.
-
-**Business Purpose**: Automate the audiobook creation process by eliminating the need to hire voice talent, book studio time, and perform manual post-production.
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-------------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| UI Components | Radix UI + shadcn/ui |
-| Styling | Tailwind CSS 4 |
-| Form Handling | React Hook Form + Zod |
-| Icons | Lucide React |
-| Charts | Recharts |
-| Storage | JSON file system or SQLite (`NARRATOR_STORAGE_BACKEND=sqlite`) |
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (React)                        │
-│  Dashboard Layout → Upload → Voices → Processing → Player     │
-└─────────────────────────────────────────────────────────────────┘
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     BACKEND (Next.js API Routes)               │
-│  /api/books → CRUD operations                                 │
-└─────────────────────────────────────────────────────────────────┘
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    DATA LAYER (File System)                    │
-│  data/books.json (metadata), data/uploads/ (manuscripts)     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Key Features
-
-- **Manuscript Upload**: Support for PDF, DOCX, and TXT files
-- **Voice Studio**: Preview the included English Lessac voice before starting narration
-- **Real-time Progress Tracking**: Live chapter-by-chapter generation progress
-- **Audio Playback**: Built-in player with chapter navigation and playback controls
-- **Chapter Downloads**: Download real WAV files when chapter audio is available; MP3, M4B, and ZIP exports remain unimplemented
-- **Author Library**: Search by title/author, filter by project status, and safely confirm deletion
-- **Dark/Light Theme**: Toggle between themes
-
-## Author studio redesign
-
-The storybook landing page at `/` uses Gloock headlines, handwritten notes,
-cream and forest-green surfaces, and pressable coral buttons. Open `/library`
-for the working author studio. Pricing remains free, and the book-cover
-placeholders are preserved throughout the redesign.
-
-![Storybook landing page](docs/ui-preview/landing-hero.webp)
-
-The interface uses warm paper surfaces, forest-green accents, editorial headings, and book covers. The creation form keeps your manuscript details until you approve narration, and reuses an uploaded book when retrying a failed generation request. A getting-started guide is available at `/guide`.
-
-![Desktop author studio](docs/ui-preview/desktop.webp)
-
-![Mobile author studio](docs/ui-preview/mobile.webp)
-
-### Current backend limitations
-
-This redesign does not replace the narration backend. The bundled Piper executable is Windows-only. PDF/DOCX extraction is experimental, progress reconciliation can still simulate completion without playable audio, and the legacy export API returns placeholders. The listening room only enables chapters with audio URLs and offers their actual WAV files. Use TXT for the most reliable manuscript input. Persistent storage and a compatible speech engine are still needed for hosted production use.
-
-## Setup & Installation
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm (recommended) or npm
-
-### Installation
+Install Docker with Compose, then:
 
 ```bash
-# Install dependencies
-pnpm install
-
-# or with npm
-npm install
+docker compose up --build -d
 ```
 
-## How to Run
+Open **http://localhost:3000**. Create an account, upload TXT, DOCX or a text-based PDF, review the narrator and select **Create my audiobook**. Uploading automatically queues narration. The worker writes real WAV chapters and combines them into a downloadable MP3. Completed books also export a ZIP of chapter WAVs.
+
+The first build downloads a verified 64 MB English voice model and installs Python/Piper. Allow at least 2 GB RAM, several GB of disk space and CPU time; book-length narration can take a while. Audio is generated locally. Authors may close their browser while the worker continues.
+
+For a public server, set `BETTER_AUTH_URL` to your exact HTTPS origin before starting Compose, and put the web service behind an HTTPS reverse proxy with an 11 MB request-body limit. The default persistent volume stores accounts, sessions, manuscripts, audio and an automatically generated authentication secret. Do not delete the volume or change the secret unless you intend to invalidate sessions. Hosting and compute remain the operator’s responsibility; the software and narration engine require no paid service.
 
 ```bash
-# Start development server
-pnpm dev
+BETTER_AUTH_URL=https://your-domain.example docker compose up --build -d
+docker compose logs -f worker
+```
 
-# Build for production
+## Local development
+
+Requires Node 24, Python 3.10+ and FFmpeg available on PATH. Run from the repository root:
+
+```bash
+npm ci
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/setup-narration.py
+cp .env.example .env.local
+npm run dev
+```
+
+In a second terminal:
+
+```bash
+npm run worker
+```
+
+On Windows use `.venv\Scripts\python.exe` for Python commands. The worker loads `.env.local` using Next.js environment loading. `NARRATOR_PYTHON` and `NARRATOR_FFMPEG` can override executable paths. The checked-in historical Windows binaries are no longer used.
+
+For a local production run, use `npm run build`, `npm start`, and `NODE_ENV=production npm run worker`. Both processes must share `NARRATOR_DATA_DIR` (default `data/private`) and the same model directory. SQLite and files require a persistent local disk; this complete backend cannot run inside an ephemeral Vercel/serverless function. Do not place private data under `public/`.
+
+## Author experience
+
+1. **Create an account or log in.** Email/password login uses Better Auth, hashed passwords and revocable, HTTP-only sessions. There is no email verification or password-reset service in this first version; use a password manager.
+2. **Upload and review.** English TXT, DOCX and text-based PDF are supported, up to 10 MB / 100,000 words / 200 chapters. Scanned PDFs require OCR before upload. Chapter/Part/Section headings are retained; manuscripts without headings are split at paragraph boundaries.
+3. **Create.** A persisted queue starts automatically. Progress advances only when chapter audio has been produced and saved. The interface identifies an offline worker, and a failed job can be retried without re-uploading or repeating completed chapters.
+4. **Listen and download.** Chapter WAV playback supports HTTP Range requests for seeking. Completed books provide an actual MP3 and a ZIP containing numbered WAV chapters.
+5. **Manage the library.** Books, progress, audio, downloads and deletion belong to the signed-in author. Another account receives 404 for every book endpoint. Deletion removes the saved manuscript and generated files. Active narration must finish before deletion.
+
+Uploads are limited to two active books per account and ten upload attempts per hour. Auth attempts are rate-limited in SQLite. The default voice is **LJ**, trained on the public-domain LJ Speech dataset. Only this English voice is available; the other landing-page cast members remain labeled concepts.
+
+## Architecture
+
+- Next.js 16 / React 19 and a server-validated protected dashboard.
+- Better Auth email/password accounts and sessions in SQLite, with secure cookies on HTTPS and origin checks on mutations.
+- `lib/server/audiobook-store.ts`: account ownership, normalized books/chapters/jobs, transactional queuing and upload idempotency.
+- `scripts/extract-manuscript.py`: bounded DOCX and PDF parsing; UTF-8 TXT parsing runs in Node.
+- `scripts/narration-worker.ts`: sequential CPU narration, renewable leases, fencing tokens, persisted chapter results and crash recovery.
+- `scripts/synthesize.py`: Piper synthesis in bounded text chunks, writing WAV incrementally.
+- FFmpeg creates the full MP3 after all chapters finish; streaming ZIP export avoids loading the book into memory.
+- Private audio is served through authenticated routes, never from `public/audio`. Legacy global TTS/file-management endpoints return 410, and old public audio URLs return 404. Public narrator samples live separately under `public/samples`.
+
+A worker that crashes resumes after its 30-second lease expires. Completed chapters are reused; three consecutive crash attempts stop the job for an explicit author retry. Transient synthesis failures are shown immediately, with completed chapters preserved. Run one web process and one worker per shared local volume. Horizontal scaling across machines requires a shared database/object store and a different queue.
+
+Historical anonymous JSON/SQLite books and public audio are not automatically assigned to an account. They remain untouched for manual migration; exposing them to every new user would violate library privacy. Existing architecture/integration documents describe the previous implementation and are historical.
+
+## Validation
+
+```bash
+npm run typecheck
 npm run build
-
-# Start production server
-npm start
+npm run test:backend
 ```
 
-The application runs at `http://localhost:3000`.
+The backend integration suite launches an isolated production server and real worker, creates two accounts, and checks ownership, CSRF, upload limits, TXT/DOCX/PDF extraction, actual Piper WAVs, MP3/ZIP validity, Range playback, idempotent uploads, deletion, session revocation, server restarts and worker crash recovery. Install narration dependencies and download the model first. Test data is temporary and removed after the suite.
 
-If the studio layout appears unstyled after switching branches, stop the running
-server and start with `npm run dev:clean` (or `pnpm dev:clean`). This clears only
-Next.js generated output before starting development. Make sure you are running
-`feat/author-studio-redesign` while its pull request is open.
+Optional browser verification requires Playwright and Chromium. Set `NARRATOR_BROWSER_TESTS=1` when running the suite. `NARRATOR_CHROMIUM_PATH`, `NARRATOR_PLAYWRIGHT_IMPORT` and `NARRATOR_AXE_IMPORT` support installed browser runtimes. It exercises signup → upload → generated audio → playback/download → logout/login in a mobile viewport.
 
-## Deploy to Vercel
+Back up the entire private data directory with web and worker stopped, including `auth-secret` and SQLite WAL files. Restore onto a persistent volume with matching ownership. Never commit author data, credentials or generated book audio.
 
-The project is configured for Vercel's automatic Next.js detection and does not
-require a custom build command. From the repository root, deploy with:
+## Licensing
 
-```bash
-npx vercel@latest
-npx vercel@latest --prod
-```
-
-Alternatively, import the repository in the Vercel dashboard and keep the
-detected framework preset set to **Next.js**. No environment variables are
-required to render the bundled demo data.
-
-> **Runtime storage:** Vercel Functions have an ephemeral filesystem. The
-> bundled JSON records and audio are suitable for a demo deployment, but new
-> uploads and generated audio are not durable across function invocations.
-> Connect a persistent database and object-storage provider before using the
-> upload and generation workflow in production. The bundled Piper executable is
-> also Windows-only, so server-side speech generation requires a Linux-compatible
-> TTS service or binary on Vercel.
-
-## Folder Structure
-
-```
-Narrator/
-├── app/                      # Next.js App Router
-│   ├── (dashboard)/         # Dashboard pages group
-│   │   ├── library/         # Author bookshelf (/library)
-│   │   ├── upload/         # Manuscript upload
-│   │   ├── voices/         # Voice selection
-│   │   ├── processing/     # Generation progress
-│   │   └── player/        # Audio playback
-│   ├── page.tsx            # Storybook landing page (/)
-│   └── api/               # API routes
-│       └── books/         # Book endpoints
-├── components/             # React components
-│   ├── ui/               # shadcn/ui components
-│   └── *.tsx             # Feature components
-├── lib/                  # Core logic
-│   ├── audiobook-types.ts  # TypeScript interfaces
-│   ├── server/           # Server-side logic
-│   │   └── audiobook-store.ts  # Data operations
-│   └── utils.ts          # Utility functions
-└── data/                 # Runtime data storage
-    ├── books.json        # Book metadata
-    └── uploads/          # Uploaded files
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|--------------|
-| GET | `/api/books` | List all books |
-| POST | `/api/books` | Create new book |
-| GET | `/api/books/[id]` | Get book details |
-| POST | `/api/books/[id]/generate` | Start audio generation |
-| GET | `/api/books/[id]/download` | Download audiobook files |
-| GET | `/api/books/[id]/status` | Get live status snapshot for one book |
-| GET | `/api/books/[id]/chapters` | List chapter statuses (optional `?status=` filter) |
-
-### Response Envelopes for Polling Endpoints
-
-The `/api/books/[id]/status` and `/api/books/[id]/chapters` endpoints now include additive envelope metadata for stable client polling while preserving existing fields.
-
-#### `GET /api/books/[id]/status`
-
-Sample response:
-
-```json
-{
-  "status": {
-    "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
-    "status": "processing",
-    "progress": 42,
-    "chapterStats": {
-      "total": 12,
-      "completed": 5,
-      "processing": 1,
-      "pending": 6,
-      "failed": 0
-    },
-    "activeChapter": {
-      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-6",
-      "name": "Chapter 6",
-      "status": "processing",
-      "duration": null
-    },
-    "startedAt": "2026-03-25T10:11:12.000Z",
-    "updatedAt": "2026-03-25T10:12:13.000Z"
-  },
-  "apiVersion": "2026-03-25",
-  "generatedAt": "2026-03-25T10:12:13.100Z",
-  "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
-  "updatedAt": "2026-03-25T10:12:13.000Z",
-  "revision": 1774433533000
-}
-```
-
-#### `GET /api/books/[id]/chapters`
-
-Sample response:
-
-```json
-{
-  "chapters": [
-    {
-      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-1",
-      "name": "Chapter 1",
-      "status": "completed",
-      "duration": "8:00"
-    },
-    {
-      "id": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a-chapter-2",
-      "name": "Chapter 2",
-      "status": "processing",
-      "duration": null
-    }
-  ],
-  "apiVersion": "2026-03-25",
-  "generatedAt": "2026-03-25T10:12:13.100Z",
-  "bookId": "4f2f5eb2-52ad-49f0-bbc7-7ca0f5d4ad9a",
-  "updatedAt": "2026-03-25T10:12:13.000Z",
-  "revision": 1774433533000
-}
-```
-
-#### Added envelope fields
-
-- `apiVersion` (`string`): API envelope version for client compatibility checks.
-- `generatedAt` (`string`, ISO 8601): server timestamp when the response payload was generated.
-- `bookId` (`string`): stable identifier of the requested book at the top level.
-- `updatedAt` (`string`, ISO 8601): latest `BookRecord.updatedAt` value for change detection.
-- `revision` (`number`): epoch-millisecond numeric revision derived from `updatedAt` for efficient monotonic polling comparisons.
-
-> Backward compatibility note: existing `status` and `chapters` fields are unchanged and remain present.
-
-## User Flow
-
-1. **Upload**: User uploads manuscript (PDF/DOCX/TXT) with title, author, and language
-2. **Narrator & Review**: Preview the included voice and review manuscript details before any upload or generation request
-3. **Processing**: System generates audiobook chapter-by-chapter with real-time progress
-4. **Playback**: User can listen to the audiobook and download in various formats
-
-## How to Test
-
-1. Start the development server: `pnpm dev`
-2. Open `http://localhost:3000`
-3. Click "Create an audiobook"
-4. Choose a manuscript and fill in its title and author
-5. Continue to the narrator, preview the voice, and review the details
-6. Click "Create my audiobook" and follow chapter progress
-7. Open the listening room, play available audio, and download WAV chapters
-
-## Development Notes
-
-- **Audio Generation**: Currently simulated based on elapsed time. To make it real, integrate an AI TTS service (ElevenLabs, PlayHT, Azure Speech) in the `startGeneration()` function in `lib/server/audiobook-store.ts`.
-- **Storage**: Uses JSON file storage by default. Set `NARRATOR_STORAGE_BACKEND=sqlite` to store records in `data/books.sqlite`.
-- **Data Location**: Books are stored in `data/books.json`, uploads in `data/uploads/`.
-- **Storage Migration Script**: Use `scripts/migrate-storage.ts` to copy records between JSON and SQLite and validate counts/IDs.
-  - JSON ➜ SQLite: `node --experimental-strip-types scripts/migrate-storage.ts --from=json --to=sqlite`
-  - SQLite ➜ JSON: `node --experimental-strip-types scripts/migrate-storage.ts --from=sqlite --to=json`
-
-## Contribution Guidelines
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Make your changes and add tests if applicable
-4. Ensure code passes linting: `pnpm lint`
-5. Commit your changes: `git commit -m "Add my feature"`
-6. Push to the branch: `git push origin feature/my-feature`
-7. Create a Pull Request
-
-## License
-
-Private - All rights reserved.
+The Python narration dependency `piper-tts` is GPL-3.0; preserve its license and corresponding-source obligations when redistributing the Docker image. The LJ voice uses the public-domain LJ Speech dataset; model information is downloaded with the model. See `docs/NARRATION_LICENSES.md` for upstream links. Self-hosted UI fonts retain their OFL licenses.

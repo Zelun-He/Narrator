@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 
-const sampleUrl = "/audio/piper-1774499771465-uyjola.wav";
+const sampleUrl = "/samples/lj.wav";
 const bars = [
   12, 24, 18, 32, 40, 23, 33, 16, 28, 38, 22, 14, 30, 42, 25, 18, 34, 24, 12,
   22,
@@ -101,7 +101,7 @@ export function NarrationSample({ compact = false }: { compact?: boolean }) {
               />
             ))}
           </div>
-          <span className="sample-credit">Lessac · bundled narration demo</span>
+          <span className="sample-credit">LJ · bundled narration demo</span>
         </div>
       )}
       {error && (

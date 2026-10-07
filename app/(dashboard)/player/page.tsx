@@ -172,7 +172,7 @@ function ListeningRoom() {
                     </button>
                     {c.audioUrl && (
                       <a
-                        href={c.audioUrl}
+                        href={`${c.audioUrl}?download=1`}
                         download={`${book.title}-${i + 1}.wav`}
                         className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-primary"
                         aria-label={`Download ${c.name} as WAV`}
@@ -194,10 +194,26 @@ function ListeningRoom() {
               <div className="flex gap-3">
                 <Download size={18} className="shrink-0 text-primary" />
                 <div>
-                  <h2 className="text-sm font-medium">Keep your chapters</h2>
+                  <h2 className="text-sm font-medium">Keep your audiobook</h2>
+                  {book.downloadUrl && (
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <a
+                        className="text-sm text-primary underline"
+                        href={book.downloadUrl}
+                      >
+                        Download MP3
+                      </a>
+                      <a
+                        className="text-sm text-primary underline"
+                        href={`/api/books/${book.id}/download?format=zip`}
+                      >
+                        Download chapters (ZIP)
+                      </a>
+                    </div>
+                  )}
                   <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    Download available WAV audio using the arrow beside each
-                    chapter. MP3 and M4B exports aren’t available yet.
+                    Download a chapter as WAV, or keep your completed audiobook
+                    as MP3 and all chapters as a ZIP.
                   </p>
                 </div>
               </div>

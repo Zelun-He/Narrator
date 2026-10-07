@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    image: narrator:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+    volumes:
+      - author-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  worker:
+    image: narrator:local
+    init: true
+    restart: unless-stopped
+    command: ["npm", "run", "worker"]
+    environment:
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+    volumes:
+      - author-data:/data
+    depends_on:
+      web:
+        condition: service_healthy
+volumes:
+  author-data:

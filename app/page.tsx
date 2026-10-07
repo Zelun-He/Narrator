@@ -42,11 +42,11 @@ export default function HomePage() {
           <a href="#how">How it works</a>
           <a href="#voices">Voices</a>
           <a href="#pricing">Pricing</a>
-          <Link href="/library" className="library-nav">
-            Your library
+          <Link href="/login" className="library-nav">
+            Log in
           </Link>
           <Link
-            href="/upload"
+            href="/signup?next=/upload"
             className="story-button story-button-forest nav-start"
           >
             Start free <ArrowRight size={15} />
@@ -68,7 +68,10 @@ export default function HomePage() {
               an audiobook, with a little help from Narrator.
             </p>
             <div className="story-actions">
-              <Link href="/upload" className="story-button story-button-coral">
+              <Link
+                href="/signup?next=/upload"
+                className="story-button story-button-coral"
+              >
                 Turn my book into audio <ArrowRight size={18} />
               </Link>
               <NarrationSample compact />
@@ -193,7 +196,7 @@ export default function HomePage() {
                 L
               </span>
               <span className="story-label cast-tag">AVAILABLE · ENGLISH</span>
-              <h3>Lessac</h3>
+              <h3>LJ</h3>
               <p>Clear, natural, and ready for your next chapter.</p>
               <Link href="/voices" className="cast-action">
                 Meet your narrator <ArrowRight size={16} />
@@ -276,7 +279,7 @@ export default function HomePage() {
                 </li>
               </ul>
               <Link
-                href="/upload"
+                href="/signup?next=/upload"
                 className="story-button story-button-outline"
               >
                 Narrate my book <ArrowRight size={17} />
@@ -330,7 +333,10 @@ export default function HomePage() {
             </h2>
             <p>Let’s give your words a life beyond the page.</p>
           </div>
-          <Link href="/upload" className="story-button story-button-forest">
+          <Link
+            href="/signup?next=/upload"
+            className="story-button story-button-forest"
+          >
             Bring my book to life <ArrowRight size={19} />
           </Link>
           <span className="story-sticker final-sticker">

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Library,
@@ -31,7 +33,25 @@ const navigation = [
   { title: "Voice studio", href: "/voices", icon: Mic2 },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({
+  user,
+}: {
+  user: { name: string; email: string };
+}) {
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  async function logout() {
+    setSigningOut(true);
+    setLogoutError(null);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error();
+      window.location.assign("/login");
+    } catch {
+      setLogoutError("Couldn’t log out. Please try again.");
+      setSigningOut(false);
+    }
+  }
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
   const closeMobile = () => {
@@ -119,6 +139,23 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-5">
+        <div className="mb-3 rounded-lg border p-3">
+          <p className="truncate text-sm font-medium">{user.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <button
+            type="button"
+            disabled={signingOut}
+            onClick={() => void logout()}
+            className="mt-3 text-xs font-semibold text-primary"
+          >
+            {signingOut ? "Logging out…" : "Log out"}
+          </button>
+          {logoutError && (
+            <p role="alert" className="mt-2 text-xs text-destructive">
+              {logoutError}
+            </p>
+          )}
+        </div>
         <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
           <Heart size={18} className="mb-3 text-primary" />
           <p className="text-sm font-medium">Made for your stories.</p>

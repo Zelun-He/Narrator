@@ -136,7 +136,9 @@ function ProcessingContent() {
                     ? "Narration needs attention"
                     : complete
                       ? "Processing finished"
-                      : "Creating your narration"}
+                      : book.jobState === "queued"
+                        ? "Waiting to narrate"
+                        : "Creating your narration"}
                 </h2>
                 <p className="panel-description">
                   {completed} of {chapters.length} chapters processed · {ready}{" "}
@@ -156,12 +158,19 @@ function ProcessingContent() {
               {complete && ready === 0
                 ? "No playable audio is available yet. Try narration again, or return to your library."
                 : failed
-                  ? "Your manuscript is saved. You can return to the voice studio and retry narration."
+                  ? "Your manuscript and finished chapters are saved. Retry to continue from where narration stopped."
                   : complete
                     ? "Available chapters are ready in the listening room."
-                    : "Longer manuscripts take more time. You can return to your library and check back here."}
+                    : book.workerAvailable
+                      ? "Longer manuscripts take more time. You can close this page and come back; narration continues in the background."
+                      : "Your manuscript is safely queued. The narration worker is currently offline; creation will begin when it reconnects."}
             </p>
           </section>
+          {book.generationError && (
+            <p role="alert" className="mt-4 text-sm text-destructive">
+              {book.generationError}
+            </p>
+          )}
           <section className="studio-panel mt-6">
             <h2 className="panel-title">Chapter by chapter</h2>
             <div className="mt-5 divide-y">

@@ -1,3 +1,5 @@
+> Historical UI validation before the backend upgrade. See [current backend verification](../backend-verification.md) for authentication, real narration and exports.
+
 # Author studio preview and validation
 
 The redesign follows the author's storybook theme: cream and forest green, coral

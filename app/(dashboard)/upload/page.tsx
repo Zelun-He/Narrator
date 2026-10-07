@@ -29,7 +29,7 @@ export default function UploadPage() {
   const [voiceId, setVoiceId] = useState(VOICE_OPTIONS[0].id);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const uploadKey = useRef<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const valid = Boolean(file && title.trim() && author.trim());
   const voice = VOICE_OPTIONS.find((v) => v.id === voiceId)!;
@@ -48,37 +48,28 @@ export default function UploadPage() {
     setSubmitting(true);
     setError(null);
     try {
-      let id = savedId;
-      if (!id) {
-        const form = new FormData();
-        form.append("file", file!);
-        form.append("title", title.trim());
-        form.append("author", author.trim());
-        form.append("language", "english");
-        form.append("voiceId", voiceId);
-        const response = await fetch("/api/books", {
-          method: "POST",
-          body: form,
-        });
-        const data = await response.json();
-        if (!response.ok || !data.book?.id)
-          throw new Error(
-            data.error || "Your manuscript couldn’t upload. Please try again.",
-          );
-        id = data.book.id;
-        setSavedId(id);
-      }
-      const response = await fetch(`/api/books/${id}/generate`, {
+      uploadKey.current ??= crypto.randomUUID();
+      const form = new FormData();
+      form.append("file", file!);
+      form.append("title", title.trim());
+      form.append("author", author.trim());
+      form.append("language", "english");
+      form.append("voiceId", voiceId);
+      const response = await fetch("/api/books", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voiceId, voiceName: voice.name }),
+        headers: { "Idempotency-Key": uploadKey.current },
+        body: form,
       });
       const data = await response.json();
-      if (!response.ok)
+      if (response.status === 401) {
+        window.location.assign("/login?next=/upload");
+        return;
+      }
+      if (!response.ok || !data.book?.id)
         throw new Error(
-          data.error ||
-            "Narration couldn’t start. Your upload is saved; please try again.",
+          data.error || "Your manuscript couldn’t upload. Please try again.",
         );
+      const id = data.book.id;
       router.push(`/processing?bookId=${id}`);
     } catch (err) {
       setError(
@@ -232,8 +223,11 @@ export default function UploadPage() {
               <Button
                 type="button"
                 variant="ghost"
-                disabled={submitting || Boolean(savedId)}
-                onClick={() => changeStep(1)}
+                disabled={submitting}
+                onClick={() => {
+                  uploadKey.current = null;
+                  changeStep(1);
+                }}
               >
                 <ArrowLeft size={15} />
                 Edit manuscript
@@ -251,11 +245,7 @@ export default function UploadPage() {
                 </>
               ) : (
                 <>
-                  {step === 1
-                    ? "Continue to narrator"
-                    : savedId
-                      ? "Retry narration"
-                      : "Create my audiobook"}
+                  {step === 1 ? "Continue to narrator" : "Create my audiobook"}
                   <ArrowRight size={16} />
                 </>
               )}
@@ -274,7 +264,7 @@ export default function UploadPage() {
               {
                 icon: FileText,
                 title: "Bring your manuscript",
-                text: "TXT works best. Use chapter headings to keep your story organized.",
+                text: "Use chapter headings to keep your story organized.",
               },
               {
                 icon: Headphones,
@@ -284,7 +274,7 @@ export default function UploadPage() {
               {
                 icon: Download,
                 title: "Listen and keep it",
-                text: "Play your audiobook and download available chapter audio.",
+                text: "Play your audiobook and download an MP3 or chapter audio.",
               },
             ].map((item) => (
               <div key={item.title} className="flex gap-3">
@@ -299,9 +289,9 @@ export default function UploadPage() {
             ))}
           </div>
           <p className="mt-7 border-t pt-5 text-[11px] leading-relaxed text-muted-foreground">
-            PDF and DOCX extraction is experimental. Use a text-based document
-            and review the results. Only upload work you have permission to
-            narrate.
+            TXT, DOCX, and text-based PDF are supported, up to 10 MB and 100,000
+            words. Scanned PDFs need OCR first. Only upload work you have
+            permission to narrate.
           </p>
         </aside>
       </div>

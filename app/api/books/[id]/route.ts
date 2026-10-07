@@ -1,32 +1,23 @@
-import { NextResponse } from "next/server"
-import { deleteBook, getBook } from "@/lib/server/audiobook-store"
-
-export const runtime = "nodejs"
-
+import { NextResponse } from "next/server";
+import { deleteBook, getBookDetails } from "@/lib/server/audiobook-store";
+import { withUser } from "@/lib/server/api";
+export const runtime = "nodejs";
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params
-  const book = await getBook(id)
-
-  if (!book) {
-    return NextResponse.json({ error: "Book not found." }, { status: 404 })
-  }
-
-  return NextResponse.json({ book })
+  const { id } = await params;
+  return withUser(request, (user) =>
+    NextResponse.json({ book: getBookDetails(user.id, id) }),
+  );
 }
-
 export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params
-  const deleted = await deleteBook(id)
-
-  if (!deleted) {
-    return NextResponse.json({ error: "Book not found." }, { status: 404 })
-  }
-
-  return NextResponse.json({ ok: true })
+  const { id } = await params;
+  return withUser(request, async (user) => {
+    await deleteBook(user.id, id);
+    return NextResponse.json({ ok: true });
+  });
 }

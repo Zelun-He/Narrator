@@ -62,13 +62,8 @@ export function VoiceCard({
     const controller = new AbortController();
     request.current = controller;
     try {
-      const response = await fetch("/api/voices/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch("/samples/lj.wav", {
         signal: controller.signal,
-        body: JSON.stringify({
-          text: "Every story begins with a possibility. Beyond the last familiar street, a new chapter was waiting to be written.",
-        }),
       });
       if (!response.ok) throw new Error();
       const blob = await response.blob();
