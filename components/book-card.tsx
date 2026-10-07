@@ -1,143 +1,193 @@
-"use client"
-
-import { BookOpen, MoreHorizontal, Play } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import type { BookStatus } from "@/lib/audiobook-types"
+"use client";
+import {
+  ArrowUpRight,
+  MoreHorizontal,
+  Play,
+  AudioLines,
+  RotateCcw,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
-interface BookCardProps {
-  id: string
-  title: string
-  author: string
-  status: BookStatus
-  chapters: number
-  progress: number
-  coverColor: string
-  onDelete?: (bookId: string) => Promise<void> | void
-}
-
-function getStatusBadge(status: BookStatus) {
-  switch (status) {
-    case "completed":
-      return (
-        <Badge className="bg-[#4ECDC4]/15 text-[#4ECDC4] border-transparent">
-          Completed
-        </Badge>
-      )
-    case "processing":
-      return (
-        <Badge className="bg-[#F59E0B]/15 text-[#D97706] dark:text-[#FBBF24] border-transparent">
-          Processing
-        </Badge>
-      )
-    case "failed":
-      return (
-        <Badge className="bg-[#FF6B6B]/15 text-[#FF6B6B] border-transparent">
-          Failed
-        </Badge>
-      )
-  }
-}
-
-export function BookCard({ id, title, author, status, chapters, progress, coverColor, onDelete }: BookCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  async function handleDelete() {
-    if (!onDelete || isDeleting) return
-    setIsDeleting(true)
+} from "@/components/ui/dropdown-menu";
+import { BookCover } from "@/components/studio-elements";
+import type { BookListItem } from "@/lib/audiobook-types";
+export function BookCard({
+  id,
+  title,
+  author,
+  status,
+  chapters,
+  progress,
+  coverColor,
+  onDelete,
+}: BookListItem & { onDelete?: (id: string) => Promise<void> | void }) {
+  const [confirm, setConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const href =
+    status === "completed"
+      ? `/player?bookId=${id}`
+      : status === "failed"
+        ? `/voices?bookId=${id}`
+        : `/processing?bookId=${id}`;
+  async function remove() {
+    setDeleting(true);
     try {
-      await onDelete(id)
+      await onDelete?.(id);
+      setConfirm(false);
+    } catch {
+      setError("Couldn’t delete this book. Please try again.");
     } finally {
-      setIsDeleting(false)
+      setDeleting(false);
     }
   }
-
   return (
-    <Card className="saas-surface group relative overflow-hidden border-white/40 transition-all hover:-translate-y-0.5">
-      <div
-        className="pointer-events-none absolute -bottom-12 left-6 right-6 h-20 rounded-full blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-45"
-        style={{ backgroundColor: coverColor }}
-      />
-      <div
-        className="absolute inset-y-0 left-0 w-1 rounded-l-lg"
-        style={{ backgroundColor: coverColor }}
-      />
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: coverColor + "1A" }}
-            >
-              <BookOpen className="size-5" style={{ color: coverColor }} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <CardTitle className="text-sm">{title}</CardTitle>
-              <p className="text-xs text-muted-foreground">{author}</p>
-            </div>
+    <article className="project-card">
+      <Link href={href} className="project-art" aria-label={`Open ${title}`}>
+        <BookCover
+          title={title}
+          author={author}
+          color={coverColor}
+          decorative
+        />
+        <span className={`project-status status-${status}`}>
+          <span />
+          {status === "completed"
+            ? "Ready to listen"
+            : status === "failed"
+              ? "Needs attention"
+              : "In progress"}
+        </span>
+        <ArrowUpRight className="project-open" size={18} />
+      </Link>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold">
+              <Link href={href}>{title}</Link>
+            </h3>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              by {author}
+            </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">More options</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Options for ${title}`}
+              >
+                <MoreHorizontal size={17} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Details</DropdownMenuItem>
-              <DropdownMenuItem>Download</DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                disabled={isDeleting}
-                onSelect={(event) => {
-                  event.preventDefault()
-                  void handleDelete()
-                }}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
+              <DropdownMenuItem asChild>
+                <Link href={href}>Open audiobook</Link>
               </DropdownMenuItem>
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onSelect={() => {
+                    setError(null);
+                    setConfirm(true);
+                  }}
+                >
+                  Delete audiobook
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          {getStatusBadge(status)}
-          <span className="text-xs text-muted-foreground">{chapters} chapters</span>
+        <div className="mt-5 flex items-center justify-between border-t pt-4">
+          <span className="text-xs text-muted-foreground">
+            {chapters} {chapters === 1 ? "chapter" : "chapters"}
+          </span>
+          <Link
+            href={href}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-primary"
+          >
+            {status === "completed" ? (
+              <>
+                <Play size={13} />
+                Listen
+              </>
+            ) : status === "failed" ? (
+              <>
+                <RotateCcw size={13} />
+                Try again
+              </>
+            ) : (
+              <>
+                <AudioLines size={13} />
+                View progress
+              </>
+            )}
+          </Link>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Progress</span>
-            <span className="text-xs font-medium">{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-1.5" />
-        </div>
-        {status === "completed" && (
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href={`/player?bookId=${id}`}>
-              <Play className="size-3.5" />
-              Play Audiobook
-            </Link>
-          </Button>
-        )}
         {status === "processing" && (
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href={`/processing?bookId=${id}`}>
-              View Progress
-            </Link>
-          </Button>
+          <div className="mt-3 flex items-center gap-3">
+            <Progress
+              aria-label={`Narration progress for ${title}`}
+              value={progress}
+              className="h-1"
+            />
+            <span className="text-[10px] text-muted-foreground">
+              {progress}%
+            </span>
+          </div>
         )}
-      </CardContent>
-    </Card>
-  )
+      </div>
+      <AlertDialog
+        open={confirm}
+        onOpenChange={(open) => {
+          if (!deleting) setConfirm(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete “{title}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the book from your library. You’ll need to upload the
+              manuscript again to recreate it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Keep book</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void remove();
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete book"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </article>
+  );
 }

@@ -1,123 +1,106 @@
-"use client"
-
-import { useCallback, useState } from "react"
-import { Upload, FileText, X } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-
-interface FileUploadZoneProps {
-  onFileSelect: (file: File | null) => void
-  selectedFile: File | null
-}
-
-export function FileUploadZone({ onFileSelect, selectedFile }: FileUploadZoneProps) {
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  function isAcceptedFile(file: File): boolean {
-    const lowerName = file.name.toLowerCase()
-    return lowerName.endsWith(".pdf") || lowerName.endsWith(".docx") || lowerName.endsWith(".txt")
-  }
-
-  function applyFile(file: File | undefined) {
-    if (!file) return
-    if (!isAcceptedFile(file)) {
-      setError("Unsupported file type. Please upload PDF, DOCX, or TXT.")
-      return
+"use client";
+import { useId, useState } from "react";
+import { Upload, FileText, X, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+export function FileUploadZone({
+  onFileSelect,
+  selectedFile,
+}: {
+  onFileSelect: (file: File | null) => void;
+  selectedFile: File | null;
+}) {
+  const id = useId();
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  function apply(file: File | undefined) {
+    if (!file) return;
+    if (!/\.(pdf|docx|txt)$/i.test(file.name)) {
+      setError("Choose a PDF, DOCX, or TXT manuscript.");
+      return;
     }
-    setError(null)
-    onFileSelect(file)
+    if (!file.size) {
+      setError("This file is empty. Please choose a manuscript with text.");
+      return;
+    }
+    setError(null);
+    onFileSelect(file);
   }
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragOver(false)
-      applyFile(e.dataTransfer.files[0])
-    },
-    [onFileSelect]
-  )
-
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      applyFile(e.target.files?.[0])
-    },
-    [onFileSelect]
-  )
-
-  if (selectedFile) {
-    return (
-      <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-[#0EA5E9]/15">
-            <FileText className="size-5 text-[#0EA5E9]" />
+  return (
+    <div>
+      {selectedFile ? (
+        <div className="flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 p-5">
+          <FileText className="size-7 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="break-all text-sm font-medium">{selectedFile.name}</p>
+            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <Check size={12} />
+              Ready to upload · {(selectedFile.size / 1024 / 1024).toFixed(
+                2,
+              )}{" "}
+              MB
+            </p>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{selectedFile.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-            </span>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => {
+              setError(null);
+              onFileSelect(null);
+            }}
+            aria-label="Remove manuscript"
+          >
+            <X size={16} />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => {
-            setError(null)
-            onFileSelect(null)
+      ) : (
+        <label
+          htmlFor={id}
+          className={cn("dropzone", dragging && "dragging")}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            apply(e.dataTransfer.files[0]);
           }}
         >
-          <X className="size-4" />
-          <span className="sr-only">Remove file</span>
-        </Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <label
-        htmlFor="file-upload"
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-10 transition-colors",
-          isDragOver
-            ? "border-[#0EA5E9] bg-[#0EA5E9]/5"
-            : "border-border hover:border-[#0EA5E9]/50 hover:bg-muted/50"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#0EA5E9]/15">
-          <Upload className="size-6 text-[#0EA5E9]" />
-        </div>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <p className="text-sm font-medium">
-            Drag and drop your manuscript here
-          </p>
-          <p className="text-xs text-muted-foreground">
-            or click to browse. Supports PDF, DOCX, TXT
-          </p>
-        </div>
-        <input
-          id="file-upload"
-          type="file"
-          accept=".pdf,.docx,.txt"
-          className="sr-only"
-          onChange={handleFileInput}
-        />
-      </label>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+          <span className="flex size-12 items-center justify-center rounded-xl border bg-card text-primary">
+            <Upload size={23} />
+          </span>
+          <div className="text-center">
+            <p className="text-sm font-medium">Drop your manuscript here</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              or{" "}
+              <span className="font-medium text-primary underline underline-offset-4">
+                browse your files
+              </span>
+            </p>
+          </div>
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            PDF · DOCX · TXT
+          </span>
+          <input
+            id={id}
+            type="file"
+            accept=".pdf,.docx,.txt"
+            className="sr-only"
+            onChange={(e) => apply(e.target.files?.[0])}
+          />
+        </label>
+      )}
+      {error && (
+        <p className="mt-3 text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      )}
     </div>
-  )
+  );
 }

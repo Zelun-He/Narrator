@@ -1,22 +1,18 @@
-"use client"
-
-import { useState } from "react"
-import { Play, Pause, Check } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { Play, Pause, Check, Loader2, Mic2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 interface VoiceCardProps {
-  id: string
-  name: string
-  description: string
-  accent: string
-  gender: string
-  selected: boolean
-  onSelect: (id: string) => void
-  previewOnly?: boolean
+  id: string;
+  name: string;
+  description: string;
+  accent: string;
+  gender: string;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  previewOnly?: boolean;
 }
-
 export function VoiceCard({
   id,
   name,
@@ -27,99 +23,158 @@ export function VoiceCard({
   onSelect,
   previewOnly = false,
 }: VoiceCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [audioRef] = useState<HTMLAudioElement | null>(null)
-
-  async function togglePreview(e: React.MouseEvent) {
-    e.stopPropagation()
-    
-    if (isPlaying) {
-      setIsPlaying(false)
-      return
+  const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const objectUrl = useRef<string | null>(null);
+  const request = useRef<AbortController | null>(null);
+  function release() {
+    audio.current?.pause();
+    audio.current = null;
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = null;
+  }
+  useEffect(
+    () => () => {
+      request.current?.abort();
+      release();
+    },
+    [],
+  );
+  async function preview() {
+    if (playing) {
+      audio.current?.pause();
+      setPlaying(false);
+      return;
     }
-
+    if (audio.current) {
+      try {
+        await audio.current.play();
+        setPlaying(true);
+      } catch {
+        setError("Playback was blocked. Please try again.");
+      }
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const controller = new AbortController();
+    request.current = controller;
     try {
-      setIsPlaying(true)
       const response = await fetch("/api/voices/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
-          text: `This is the ${name} voice. Perfect for audiobooks and narration.`,
+          text: "Every story begins with a possibility. Beyond the last familiar street, a new chapter was waiting to be written.",
         }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to generate preview")
+      });
+      if (!response.ok) throw new Error();
+      const blob = await response.blob();
+      if (controller.signal.aborted) return;
+      objectUrl.current = URL.createObjectURL(blob);
+      const player = new Audio(objectUrl.current);
+      audio.current = player;
+      player.onended = () => {
+        setPlaying(false);
+        release();
+      };
+      player.onerror = () => {
+        setPlaying(false);
+        setError("This preview couldn’t play. Please try again.");
+        release();
+      };
+      await player.play();
+      if (!controller.signal.aborted) setPlaying(true);
+    } catch {
+      if (!controller.signal.aborted) {
+        setError(
+          "Voice preview is unavailable right now. You can still review your manuscript.",
+        );
+        release();
       }
-
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-      
-      // Create and play audio element
-      const audio = new Audio(audioUrl)
-      audio.onended = () => {
-        setIsPlaying(false)
-        URL.revokeObjectURL(audioUrl)
-      }
-      audio.play().catch(() => {
-        setIsPlaying(false)
-      })
-    } catch (error) {
-      console.error("Preview error:", error)
-      setIsPlaying(false)
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
     }
   }
-
   return (
-    <Card
+    <div
       className={cn(
-        "saas-surface border-white/40 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20",
-        !previewOnly && "cursor-pointer",
-        selected && "border-[#4ECDC4] ring-2 ring-[#4ECDC4]/20"
+        "studio-panel",
+        selected && "border-primary/50 ring-2 ring-primary/10",
       )}
-      onClick={() => {
-        if (!previewOnly) onSelect(id)
-      }}
     >
-      <CardContent className="flex items-center gap-4 pt-0">
-        <div className={cn(
-          "relative flex size-12 shrink-0 items-center justify-center rounded-full",
-          selected ? "bg-[#4ECDC4]/15" : "bg-accent"
-        )}>
-          {selected ? (
-            <Check className="size-5 text-[#4ECDC4]" />
-          ) : (
-            <span className="text-lg font-semibold text-foreground">
-              {name.charAt(0)}
-            </span>
-          )}
+      <div className="flex items-start gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Mic2 size={22} />
         </div>
-        <div className="flex flex-1 flex-col gap-0.5">
-          <h3 className="text-sm font-semibold">{name}</h3>
-          <p className="text-xs text-muted-foreground line-clamp-1">{description}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {accent}
-            </span>
-            <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {gender}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-semibold">
+              {name.replace(" (Default)", "")}
+            </h3>
+            <span className="rounded bg-primary/10 px-2 py-1 text-[9px] text-primary">
+              Included · free
             </span>
           </div>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+          <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+            {accent} English · {gender}
+          </p>
         </div>
+      </div>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
         <Button
+          type="button"
           variant="outline"
-          size="icon-sm"
-          className="shrink-0"
-          onClick={togglePreview}
-          aria-label={isPlaying ? "Pause preview" : "Play preview"}
+          size="sm"
+          onClick={() => void preview()}
+          disabled={loading}
+          aria-label={playing ? "Pause voice preview" : "Play voice preview"}
         >
-          {isPlaying ? (
-            <Pause className="size-3.5" />
+          {loading ? (
+            <Loader2 className="animate-spin" size={14} />
+          ) : playing ? (
+            <Pause size={14} />
           ) : (
-            <Play className="size-3.5" />
-          )}
+            <Play size={14} />
+          )}{" "}
+          {loading
+            ? "Preparing…"
+            : playing
+              ? "Pause preview"
+              : "Listen to a sample"}
         </Button>
-      </CardContent>
-    </Card>
-  )
+        {!previewOnly && (
+          <Button
+            type="button"
+            variant={selected ? "secondary" : "ghost"}
+            size="sm"
+            aria-pressed={selected}
+            onClick={() => onSelect(id)}
+          >
+            {selected ? (
+              <>
+                <Check size={14} />
+                Selected
+              </>
+            ) : (
+              "Use this voice"
+            )}
+          </Button>
+        )}
+      </div>
+      {error && (
+        <p
+          className="mt-4 text-xs leading-relaxed text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }

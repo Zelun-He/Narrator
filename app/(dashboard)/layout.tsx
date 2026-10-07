@@ -1,50 +1,56 @@
-"use client"
-
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Separator } from "@/components/ui/separator"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { usePathname } from "next/navigation"
-
+"use client";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { usePathname } from "next/navigation";
 const pageTitles: Record<string, string> = {
-  "/": "Dashboard",
-  "/upload": "Upload Manuscript",
-  "/voices": "Voice Selection",
-  "/processing": "Processing",
-  "/player": "Audiobook Player",
-}
-
+  "/": "Your library",
+  "/upload": "New audiobook",
+  "/voices": "Voice studio",
+  "/processing": "Narration progress",
+  "/player": "Listening room",
+  "/guide": "Getting started",
+};
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const pageTitle = pageTitles[pathname] || "Dashboard"
-
+  const pathname = usePathname();
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="saas-page-gradient">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/75 px-6 backdrop-blur-md">
-          <SidebarTrigger className="-ml-2" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage className="text-sm font-medium">{pageTitle}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="ml-auto">
+      <SidebarInset className="min-w-0">
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        <header className="studio-header">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger aria-label="Toggle navigation" />
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              Workspace
+            </span>
+            <span className="hidden text-border sm:inline">/</span>
+            <span className="text-xs font-medium">
+              {pageTitles[pathname] || "Narrator"}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="free-label">
+              <span className="size-1.5 rounded-full bg-primary" />
+              Free for authors
+            </span>
             <ThemeToggle />
           </div>
         </header>
-        <div className="flex-1 overflow-auto">
+        <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
           {children}
-        </div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

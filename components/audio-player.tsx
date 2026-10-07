@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -9,19 +9,18 @@ import {
   Volume2,
   AlertCircle,
   Loader2,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { cn } from "@/lib/utils"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 interface AudioPlayerProps {
-  title: string
-  chapter: string
-  audioUrl?: string
-  duration?: string
-  onPrevious?: () => void
-  onNext?: () => void
-  isLoading?: boolean
+  title: string;
+  chapter: string;
+  audioUrl?: string;
+  duration?: string;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  isLoading?: boolean;
 }
 
 export function AudioPlayer({
@@ -33,96 +32,97 @@ export function AudioPlayer({
   onNext,
   isLoading = false,
 }: AudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [progress, setProgress] = useState([0])
-  const [volume, setVolume] = useState([75])
-  const [currentTime, setCurrentTime] = useState("0:00")
-  const [displayDuration, setDisplayDuration] = useState(duration || "--:--")
-  const [hasError, setHasError] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState([0]);
+  const [volume, setVolume] = useState([75]);
+  const [currentTime, setCurrentTime] = useState("0:00");
+  const [displayDuration, setDisplayDuration] = useState(duration || "--:--");
+  const [hasError, setHasError] = useState(false);
 
   // Format seconds to MM:SS
   const formatTime = (seconds: number) => {
-    if (!isFinite(seconds)) return "0:00"
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
+    if (!isFinite(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // Update audio source when audioUrl changes
   useEffect(() => {
     if (audioUrl && audioRef.current) {
-      audioRef.current.src = audioUrl
-      setHasError(false)
+      audioRef.current.src = audioUrl;
+      setHasError(false);
     }
-  }, [audioUrl])
+  }, [audioUrl]);
 
   // Update progress as audio plays
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
+    const audio = audioRef.current;
+    if (!audio) return;
 
     const handleTimeUpdate = () => {
       if (audio.duration) {
-        const percent = (audio.currentTime / audio.duration) * 100
-        setProgress([percent])
-        setCurrentTime(formatTime(audio.currentTime))
-        setDisplayDuration(formatTime(audio.duration))
+        const percent = (audio.currentTime / audio.duration) * 100;
+        setProgress([percent]);
+        setCurrentTime(formatTime(audio.currentTime));
+        setDisplayDuration(formatTime(audio.duration));
       }
-    }
+    };
 
     const handleEnded = () => {
-      setIsPlaying(false)
-    }
+      setIsPlaying(false);
+    };
 
     const handleError = () => {
-      setHasError(true)
-      setIsPlaying(false)
-    }
+      setHasError(true);
+      setIsPlaying(false);
+    };
 
-    audio.addEventListener("timeupdate", handleTimeUpdate)
-    audio.addEventListener("ended", handleEnded)
-    audio.addEventListener("error", handleError)
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
 
     return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate)
-      audio.removeEventListener("ended", handleEnded)
-      audio.removeEventListener("error", handleError)
-    }
-  }, [])
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
+    };
+  }, []);
 
   // Handle play/pause
   useEffect(() => {
-    if (!audioRef.current) return
+    if (!audioRef.current) return;
 
     if (isPlaying && audioUrl) {
       audioRef.current.play().catch(() => {
-        setHasError(true)
-        setIsPlaying(false)
-      })
+        setHasError(true);
+        setIsPlaying(false);
+      });
     } else {
-      audioRef.current.pause()
+      audioRef.current.pause();
     }
-  }, [isPlaying, audioUrl])
+  }, [isPlaying, audioUrl]);
 
   // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume[0] / 100
+      audioRef.current.volume = volume[0] / 100;
     }
-  }, [volume])
+  }, [volume]);
 
   const handleProgressChange = (value: number[]) => {
-    setProgress(value)
+    setProgress(value);
     if (audioRef.current && audioRef.current.duration) {
-      audioRef.current.currentTime = (value[0] / 100) * audioRef.current.duration
+      audioRef.current.currentTime =
+        (value[0] / 100) * audioRef.current.duration;
     }
-  }
+  };
 
-  const canPlay = !!audioUrl && !isLoading && !hasError
+  const canPlay = !!audioUrl && !isLoading && !hasError;
 
   return (
-    <div className="saas-surface flex flex-col gap-4 rounded-xl border border-[#A78BFA]/20 p-6">
+    <div className="saas-surface flex flex-col gap-4 rounded-xl border border-border p-6">
       <div className="flex flex-col items-center gap-1">
         <h3 className="text-sm font-semibold">{title}</h3>
         <p className="text-xs text-muted-foreground">{chapter}</p>
@@ -155,14 +155,19 @@ export function AudioPlayer({
           <Slider
             value={progress}
             onValueChange={handleProgressChange}
+            aria-label="Playback position"
             max={100}
             step={0.1}
             className="cursor-pointer"
             disabled={isLoading}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-muted-foreground">{currentTime}</span>
-            <span className="text-[10px] font-mono text-muted-foreground">{displayDuration}</span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              {currentTime}
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              {displayDuration}
+            </span>
           </div>
         </div>
       )}
@@ -174,13 +179,13 @@ export function AudioPlayer({
           size="icon"
           aria-label="Previous chapter"
           onClick={onPrevious}
-          disabled={!canPlay}
+          disabled={!canPlay || !onPrevious}
         >
           <SkipBack className="size-4" />
         </Button>
         <Button
           size="icon-lg"
-          className="rounded-full bg-[#A78BFA] text-white hover:bg-[#A78BFA]/90"
+          className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={() => setIsPlaying(!isPlaying)}
           disabled={!canPlay}
           aria-label={isPlaying ? "Pause" : "Play"}
@@ -198,7 +203,7 @@ export function AudioPlayer({
           size="icon"
           aria-label="Next chapter"
           onClick={onNext}
-          disabled={!canPlay}
+          disabled={!canPlay || !onNext}
         >
           <SkipForward className="size-4" />
         </Button>
@@ -211,6 +216,7 @@ export function AudioPlayer({
           <Slider
             value={volume}
             onValueChange={setVolume}
+            aria-label="Volume"
             max={100}
             step={1}
             className="w-24 cursor-pointer"
@@ -221,5 +227,5 @@ export function AudioPlayer({
       {/* Hidden Audio Element */}
       <audio ref={audioRef} crossOrigin="anonymous" />
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 # Narrator - AI Audiobook Generator
 
-Transform manuscripts into professional audiobooks with AI-powered narration.
+A free audiobook studio for authors. Upload a manuscript, review your narrator, and listen chapter by chapter.
 
 ## Project Overview
 
@@ -43,12 +43,24 @@ Narrator is a full-stack web application that converts written manuscripts (PDF,
 ## Key Features
 
 - **Manuscript Upload**: Support for PDF, DOCX, and TXT files
-- **AI Voice Selection**: Choose from 6 pre-defined AI voices with different accents and tones
+- **Voice Studio**: Preview the included English Lessac voice before starting narration
 - **Real-time Progress Tracking**: Live chapter-by-chapter generation progress
 - **Audio Playback**: Built-in player with chapter navigation and playback controls
-- **Download Options**: Export as MP3, M4B audiobook, or ZIP archive
-- **Dashboard Analytics**: View statistics on all your audiobooks
+- **Chapter Downloads**: Download real WAV files when chapter audio is available; MP3, M4B, and ZIP exports remain unimplemented
+- **Author Library**: Search by title/author, filter by project status, and safely confirm deletion
 - **Dark/Light Theme**: Toggle between themes
+
+## Author studio redesign
+
+The interface uses warm paper surfaces, forest-green accents, editorial headings, and book covers. The creation form keeps your manuscript details until you approve narration, and reuses an uploaded book when retrying a failed generation request. A getting-started guide is available at `/guide`.
+
+![Desktop author studio](docs/ui-preview/desktop.webp)
+
+![Mobile author studio](docs/ui-preview/mobile.webp)
+
+### Current backend limitations
+
+This redesign does not replace the narration backend. The bundled Piper executable is Windows-only. PDF/DOCX extraction is experimental, progress reconciliation can still simulate completion without playable audio, and the legacy export API returns placeholders. The listening room only enables chapters with audio URLs and offers their actual WAV files. Use TXT for the most reliable manuscript input. Persistent storage and a compatible speech engine are still needed for hosted production use.
 
 ## Setup & Installation
 
@@ -221,7 +233,7 @@ Sample response:
 ## User Flow
 
 1. **Upload**: User uploads manuscript (PDF/DOCX/TXT) with title, author, and language
-2. **Voice Selection**: User chooses an AI voice from the selection grid
+2. **Narrator & Review**: Preview the included voice and review manuscript details before any upload or generation request
 3. **Processing**: System generates audiobook chapter-by-chapter with real-time progress
 4. **Playback**: User can listen to the audiobook and download in various formats
 
@@ -229,11 +241,11 @@ Sample response:
 
 1. Start the development server: `pnpm dev`
 2. Open `http://localhost:3000`
-3. Click "Create New Audiobook"
-4. Fill in the form and upload a manuscript file
-5. Select a voice and start generation
-6. Wait for processing to complete
-7. Test the audio player and download options
+3. Click "Create an audiobook"
+4. Choose a manuscript and fill in its title and author
+5. Continue to the narrator, preview the voice, and review the details
+6. Click "Create my audiobook" and follow chapter progress
+7. Open the listening room, play available audio, and download WAV chapters
 
 ## Development Notes
 
