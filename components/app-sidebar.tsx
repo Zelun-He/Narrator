@@ -123,18 +123,6 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-11">
-                <a
-                  href="https://github.com/Zelun-He/Narrator"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ArrowUpRight size={18} />
-                  View on GitHub
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

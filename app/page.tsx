@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Mic } from "lucide-react";
-import { BookCover } from "@/components/studio-elements";
+import { HeroVideo } from "@/components/hero-video";
 import { NarrationSample } from "@/components/narration-sample";
 import "./landing.css";
 
@@ -83,43 +82,8 @@ export default function HomePage() {
               No subscription. No royalty split. Just your story.
             </p>
           </div>
-          <div className="story-hero-art">
-            <div className="story-arch">
-              <Image
-                src="/images/narrator-library-header.webp"
-                alt=""
-                aria-hidden="true"
-                fill
-                sizes="(min-width: 1100px) 520px, (min-width: 768px) 44vw, 90vw"
-                preload
-                className="arch-photo"
-              />
-              <div
-                className="arch-books"
-                role="img"
-                aria-label="Illustrative book covers"
-              >
-                <div className="arch-book-back">
-                  <BookCover
-                    title="A world of your own"
-                    author="An unwritten adventure"
-                    color="#825f32"
-                    decorative
-                  />
-                </div>
-                <div className="arch-book-front">
-                  <BookCover
-                    title="Your next chapter"
-                    author="A story by you"
-                    color="#34554b"
-                    decorative
-                  />
-                </div>
-              </div>
-              <p className="arch-caption story-label">
-                EVERY STORY HAS A SOUND.
-              </p>
-            </div>
+          <div className="story-hero-art story-hero-animation">
+            <HeroVideo />
             <span className="story-sticker hero-sticker">
               a voice for your words
             </span>
@@ -352,13 +316,6 @@ export default function HomePage() {
         <p>Words deserve to be heard.</p>
         <nav aria-label="Footer navigation">
           <Link href="/guide">Help</Link>
-          <a
-            href="https://github.com/Zelun-He/Narrator"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
           <Link href="/library">Your library</Link>
         </nav>
         <span className="story-label">© 2026 NARRATOR</span>
