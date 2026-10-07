@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="64" viewBox="0 0 250 64" fill="none">
   <rect width="64" height="64" rx="16" fill="#294C3F"/>
   <path d="M12 29C19 27 25 29 30 34V51C25 46 19 44 12 46V29Z" fill="#FFF6E5"/>
   <path d="M34 34C39 29 45 27 52 29V46C45 44 39 46 34 51V34Z" fill="#FFF6E5"/>
   <rect x="20" y="17" width="5" height="9" rx="2.5" fill="#E4BF7C"/>
   <rect x="29.5" y="10" width="5" height="17" rx="2.5" fill="#E4BF7C"/>
   <rect x="39" y="17" width="5" height="9" rx="2.5" fill="#E4BF7C"/>
+<text x="78" y="45" fill="#FFF6E5" font-family="Georgia, Times New Roman, serif" font-size="41" font-weight="600" letter-spacing="-1.5">narrator<tspan fill="#9C7640">.</tspan></text>
 </svg>

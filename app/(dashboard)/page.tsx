@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -12,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatsCards } from "@/components/stats-cards";
 import { BookCard } from "@/components/book-card";
-import { BookCover } from "@/components/studio-elements";
 import type { BookListItem } from "@/lib/audiobook-types";
 
 export default function DashboardPage() {
@@ -69,6 +69,15 @@ export default function DashboardPage() {
         </Link>
       </div>
       <section className="studio-hero">
+        <Image
+          src="/images/narrator-library-header.webp"
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes="(min-width: 1440px) 1120px, (min-width: 768px) calc(100vw - 312px), 100vw"
+          preload
+          className="hero-photo"
+        />
         <div className="hero-copy">
           <span className="hero-kicker">YOUR WORDS. A NEW WAY TO LISTEN.</span>
           <h1>
@@ -82,7 +91,11 @@ export default function DashboardPage() {
             cost to you.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-5">
-            <Button asChild size="lg">
+            <Button
+              asChild
+              size="lg"
+              className="hero-create bg-[#fff2db] text-[#263f31] hover:bg-[#efd19c] hover:text-[#20382b] focus-visible:outline-2 focus-visible:outline-[#fff2db] focus-visible:outline-offset-4 focus-visible:ring-0"
+            >
               <Link href="/upload">
                 <Plus size={17} />
                 Create an audiobook
@@ -90,7 +103,7 @@ export default function DashboardPage() {
             </Button>
             <Link
               href="/voices"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+              className="hero-explore inline-flex items-center gap-2 text-sm font-medium"
             >
               Explore the voice <ArrowRight size={15} />
             </Link>
@@ -99,33 +112,6 @@ export default function DashboardPage() {
             <span />
             No subscription. Just your story.
           </div>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="art-ring art-ring-one" />
-          <div className="art-ring art-ring-two" />
-          <div className="hero-book">
-            <BookCover
-              title="Every story, out loud."
-              author="YOURS COULD BE NEXT"
-              color="#34554b"
-              decorative
-            />
-          </div>
-          <div className="sound-card">
-            <span className="sound-play">▶</span>
-            <div>
-              <p>From page to possibility</p>
-              <div className="waveform">
-                {Array.from({ length: 32 }, (_, i) => (
-                  <span
-                    key={i}
-                    style={{ height: `${8 + ((i * 17) % 29)}px` }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <span className="art-caption">A NEW LIFE FOR YOUR MANUSCRIPT</span>
         </div>
       </section>
       <StatsCards books={books} />

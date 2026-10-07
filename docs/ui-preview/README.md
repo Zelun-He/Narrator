@@ -2,6 +2,20 @@
 
 The redesign introduces a paper-and-ink palette, editorial headings, book-cover previews, a searchable bookshelf, and responsive navigation. It is centered on free creation for authors rather than analytics or a fictional signed-in account.
 
+## Narrator identity and header
+
+The custom logo combines an open book with three sound bars. Forest green, cream,
+and warm gold keep the mark recognizable at small sizes. Editable SVG marks and
+light/dark wordmarks live in `public/brand`, alongside the multi-size ICO,
+32-pixel PNG favicon, and 180-pixel Apple touch icon. Browser metadata uses new
+asset paths so the former favicon does not persist through the old cache key.
+
+The library photograph supplied by the project author is used for the dashboard
+header. It is encoded as WebP without changing the source composition, with
+responsive cropping and a dark overlay for readable text in either theme.
+Desktop/mobile layouts, icon responses, header loading, and light/dark homepage
+accessibility were verified after these updates.
+
 ## Workflow changes
 
 - Manuscript details remain in the form until the author reviews the narrator and starts creation.

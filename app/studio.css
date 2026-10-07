@@ -119,14 +119,9 @@
     background: var(--background);
   }
   .brand-mark {
-    display: flex;
     width: 40px;
     height: 40px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    background: var(--primary);
-    color: var(--primary-foreground);
+    flex-shrink: 0;
   }
   .brand-name {
     font-family: Georgia, "Times New Roman", serif;
@@ -148,26 +143,49 @@
     font-size: 11px;
     color: var(--primary);
   }
+  .brand-period {
+    color: #9c7640;
+  }
   .studio-hero {
     position: relative;
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    min-height: 362px;
+    min-height: 400px;
     margin-top: 22px;
     border: 1px solid var(--border);
     border-radius: 18px;
     overflow: hidden;
-    background: #eaeedf;
+    background: #26392d;
+    isolation: isolate;
+  }
+  .hero-photo {
+    object-fit: cover;
+    object-position: center 58%;
+    z-index: 0;
+  }
+  .studio-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      rgba(14, 25, 18, 0.94) 0%,
+      rgba(14, 25, 18, 0.84) 35%,
+      rgba(14, 25, 18, 0.4) 65%,
+      rgba(14, 25, 18, 0.12) 100%
+    );
   }
   .hero-copy {
-    z-index: 1;
-    padding: 42px;
+    position: relative;
+    z-index: 2;
+    max-width: 590px;
+    padding: 44px;
   }
   .hero-kicker {
     font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.19em;
-    color: #52674e;
+    color: #f1d8a9;
   }
   .hero-copy h1 {
     margin-top: 19px;
@@ -175,57 +193,44 @@
     font-size: clamp(36px, 4vw, 57px);
     letter-spacing: -2px;
     line-height: 1.1;
-    color: #293b2d;
+    color: #fff8eb;
   }
   .hero-copy h1 em {
-    color: #59704e;
+    color: #efd19c;
     font-weight: 400;
   }
   .hero-copy > p {
     margin-top: 18px;
     font-size: 13px;
     line-height: 1.8;
-    color: #596451;
+    color: #f0e9dc;
+  }
+  .hero-create {
+    border: 1px solid #fff2db;
+  }
+  .hero-explore {
+    color: #fff2db;
+  }
+  .hero-explore:hover {
+    color: #efd19c;
+  }
+  .hero-explore:focus-visible {
+    outline: 2px solid #fff2db;
+    outline-offset: 4px;
   }
   .hero-note {
     display: flex;
     gap: 7px;
     align-items: center;
     margin-top: 18px;
-    color: #536149;
+    color: #e8dfcf;
     font-size: 10px;
   }
   .hero-note > span {
     width: 4px;
     height: 4px;
     border-radius: 100%;
-    background: #59704e;
-  }
-  .hero-art {
-    position: relative;
-    min-height: 330px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    isolation: isolate;
-  }
-  .art-ring {
-    position: absolute;
-    border: 1px solid #c9d1b9;
-    border-radius: 50%;
-    z-index: -1;
-  }
-  .art-ring-one {
-    width: 340px;
-    height: 340px;
-  }
-  .art-ring-two {
-    width: 440px;
-    height: 440px;
-  }
-  .hero-book {
-    transform: rotate(-9deg) translate(8px, -20px);
-    filter: drop-shadow(12px 20px 14px #3e503432);
+    background: #efd19c;
   }
   .book-cover {
     position: relative;
@@ -289,64 +294,6 @@
     box-shadow:
       0 0 0 25px #ffffff09,
       0 0 0 50px #ffffff06;
-  }
-  .hero-book .book-cover {
-    width: 185px;
-    height: 255px;
-    padding: 24px;
-  }
-  .hero-book .cover-title {
-    margin-top: 38px;
-    font-size: 31px;
-  }
-  .sound-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    position: absolute;
-    bottom: 52px;
-    left: 50%;
-    width: 250px;
-    transform: translateX(-50%) rotate(3deg);
-    background: #fffdf3;
-    border: 1px solid #d9dfce;
-    box-shadow: 0 10px 30px #31452c16;
-    padding: 15px 18px;
-    border-radius: 10px;
-    color: #345b4c;
-  }
-  .sound-card p {
-    font-size: 10px;
-    margin-bottom: 9px;
-  }
-  .sound-play {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    border: 1px solid #d4deca;
-    border-radius: 50%;
-    font-size: 11px;
-  }
-  .waveform {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    height: 28px;
-  }
-  .waveform span {
-    width: 2px;
-    background: #7c9371;
-    border-radius: 4px;
-  }
-  .art-caption {
-    position: absolute;
-    bottom: 25px;
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    color: #536149;
   }
   .studio-stats {
     display: grid;
@@ -630,41 +577,12 @@
   .dark .status-processing {
     color: #dec18e;
   }
-  .dark .studio-hero {
-    background: #2a3829;
-  }
-  .dark .hero-copy h1 {
-    color: #e7eddb;
-  }
-  .dark .hero-copy h1 em {
-    color: #b4cba3;
-  }
-  .dark .hero-copy > p,
-  .dark .hero-note,
-  .dark .hero-kicker {
-    color: #b4c0a8;
-  }
-  .dark .art-ring {
-    border-color: #43553c;
-  }
-  .dark .art-caption {
-    color: #abbca2;
-  }
   @media (max-width: 1100px) {
     .studio-container {
       padding: 28px;
     }
     .hero-copy {
       padding: 32px;
-    }
-    .studio-hero {
-      grid-template-columns: 1.3fr 1fr;
-    }
-    .sound-card {
-      width: 210px;
-    }
-    .waveform span:nth-child(n + 25) {
-      display: none;
     }
     .studio-stats {
       gap: 12px;
@@ -682,42 +600,23 @@
       padding: 0 16px;
     }
     .studio-hero {
-      display: block;
+      min-height: 440px;
+    }
+    .hero-photo {
+      object-position: 58% center;
+    }
+    .studio-hero::after {
+      background: linear-gradient(
+        90deg,
+        rgba(14, 25, 18, 0.93),
+        rgba(14, 25, 18, 0.66)
+      );
     }
     .hero-copy {
       padding: 28px;
     }
     .hero-copy h1 {
-      font-size: 44px;
-    }
-    .hero-art {
-      min-height: 290px;
-    }
-    .hero-book .book-cover {
-      width: 155px;
-      height: 220px;
-    }
-    .hero-book .cover-title {
-      font-size: 26px;
-      margin-top: 25px;
-    }
-    .art-ring-one {
-      width: 280px;
-      height: 280px;
-    }
-    .art-ring-two {
-      width: 370px;
-      height: 370px;
-    }
-    .sound-card {
-      bottom: 40px;
-      width: 250px;
-    }
-    .waveform span:nth-child(n + 25) {
-      display: block;
-    }
-    .art-caption {
-      bottom: 16px;
+      font-size: 40px;
     }
     .studio-stats {
       gap: 8px;

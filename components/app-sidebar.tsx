@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Library,
   Plus,
   Mic2,
   HelpCircle,
-  AudioLines,
   ArrowUpRight,
   Heart,
 } from "lucide-react";
@@ -45,12 +45,17 @@ export function AppSidebar() {
           onClick={closeMobile}
           className="flex items-center gap-3"
         >
-          <div className="brand-mark">
-            <AudioLines size={23} />
-          </div>
+          <Image
+            src="/brand/narrator-mark.svg"
+            width={40}
+            height={40}
+            alt=""
+            aria-hidden="true"
+            className="brand-mark"
+          />
           <div>
             <span className="brand-name">
-              narrator<span className="text-primary">.</span>
+              narrator<span className="brand-period">.</span>
             </span>
             <p className="mt-1 text-[10px] uppercase tracking-[.2em] text-muted-foreground">
               An author’s studio
