@@ -94,6 +94,11 @@ npm start
 
 The application runs at `http://localhost:3000`.
 
+If the studio layout appears unstyled after switching branches, stop the running
+server and start with `npm run dev:clean` (or `pnpm dev:clean`). This clears only
+Next.js generated output before starting development. Make sure you are running
+`feat/author-studio-redesign` while its pull request is open.
+
 ## Deploy to Vercel
 
 The project is configured for Vercel's automatic Next.js detection and does not

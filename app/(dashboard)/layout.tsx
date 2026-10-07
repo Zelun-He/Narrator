@@ -1,4 +1,6 @@
 "use client";
+
+import "@/app/studio.css";
 import {
   SidebarProvider,
   SidebarInset,

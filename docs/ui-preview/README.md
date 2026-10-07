@@ -23,6 +23,18 @@ The redesign introduces a paper-and-ink palette, editorial headings, book-cover 
 - Axe checks found no WCAG 2 A/AA or WCAG 2.1 AA violations on the six main pages in their default states. Automated checks do not replace manual accessibility review.
 - `npm run lint` is blocked by the existing missing ESLint dependency/configuration.
 
+## Local development stylesheet recovery
+
+The studio theme and component rules now live in `app/studio.css`, explicitly
+imported by the dashboard layout. This keeps the new interface styling in the
+same import graph as the new dashboard rather than relying on an older cached
+base stylesheet. Clean development rendering was verified on desktop and mobile,
+including a check using the original base stylesheet alongside the studio file.
+
+For local layouts that still display the old styles, stop the dev server, pull
+this branch, and run `npm run dev:clean` or `pnpm dev:clean`. The command removes
+only generated `.next` output before restarting Next.js.
+
 ## Existing backend limitations
 
 The real preview request returns an error on Linux because the bundled Piper engine targets Windows. The existing store can simulate completed progress without audio, PDF/DOCX extraction is experimental, hosted filesystem writes are not durable, and MP3/M4B/ZIP exports remain placeholders. Those backend behaviors were not replaced in this UI-focused change. The interface and public guide disclose available input/audio capabilities rather than offering nonfunctional export buttons.
