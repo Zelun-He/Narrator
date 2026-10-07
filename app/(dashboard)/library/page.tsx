@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -69,15 +68,7 @@ export default function DashboardPage() {
         </Link>
       </div>
       <section className="studio-hero">
-        <Image
-          src="/images/narrator-library-header.webp"
-          alt=""
-          aria-hidden="true"
-          fill
-          sizes="(min-width: 1440px) 1120px, (min-width: 768px) calc(100vw - 312px), 100vw"
-          preload
-          className="hero-photo"
-        />
+        <div className="hero-photo" aria-hidden="true" />
         <div className="hero-copy">
           <span className="hero-kicker">YOUR WORDS. A NEW WAY TO LISTEN.</span>
           <h1>
