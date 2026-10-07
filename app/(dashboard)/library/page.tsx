@@ -94,7 +94,7 @@ export default function DashboardPage() {
             <Button
               asChild
               size="lg"
-              className="hero-create bg-[#fff2db] text-[#263f31] hover:bg-[#efd19c] hover:text-[#20382b] focus-visible:outline-2 focus-visible:outline-[#fff2db] focus-visible:outline-offset-4 focus-visible:ring-0"
+              className="hero-create focus-visible:outline-2 focus-visible:outline-[#fff2db] focus-visible:outline-offset-4 focus-visible:ring-0"
             >
               <Link href="/upload">
                 <Plus size={17} />

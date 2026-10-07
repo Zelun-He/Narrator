@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { bodyFont, headlineFont, labelFont, noteFont } from "./fonts";
 import "./globals.css";
+import "./book-cover.css";
 
 export const metadata: Metadata = {
   title: "Narrator — Free Audiobook Studio",
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#345b4c",
+  themeColor: "#1f3b2d",
   width: "device-width",
   initialScale: 1,
 };
@@ -45,7 +47,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body
+        className={`${bodyFont.variable} ${headlineFont.variable} ${noteFont.variable} ${labelFont.variable} font-sans antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

@@ -107,7 +107,7 @@ function ProcessingContent() {
             Open an audiobook from your library to view its progress.
           </p>
           <Button asChild>
-            <Link href="/">
+            <Link href="/library">
               Go to library
               <ArrowRight size={15} />
             </Link>

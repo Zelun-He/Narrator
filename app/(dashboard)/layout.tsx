@@ -10,7 +10,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname } from "next/navigation";
 const pageTitles: Record<string, string> = {
-  "/": "Your library",
+  "/library": "Your library",
   "/upload": "New audiobook",
   "/voices": "Voice studio",
   "/processing": "Narration progress",
@@ -24,7 +24,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   return (
-    <SidebarProvider>
+    <SidebarProvider className="author-studio">
       <AppSidebar />
       <SidebarInset className="min-w-0">
         <a href="#main-content" className="skip-link">

@@ -74,7 +74,7 @@ function ListeningRoom() {
         <div role="alert" className="empty-state">
           <p>{error}</p>
           <Button asChild variant="outline">
-            <Link href="/">Return to library</Link>
+            <Link href="/library">Return to library</Link>
           </Button>
         </div>
       ) : loading ? (
@@ -90,7 +90,7 @@ function ListeningRoom() {
             Choose an audiobook from your bookshelf.
           </p>
           <Button asChild>
-            <Link href="/">
+            <Link href="/library">
               Browse your library
               <ArrowRight size={15} />
             </Link>

@@ -54,7 +54,7 @@ export function CreationSteps({ current }: { current: number }) {
 export function LibraryLink() {
   return (
     <Link
-      href="/"
+      href="/library"
       className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft size={15} /> Back to library

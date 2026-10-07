@@ -4,31 +4,31 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f8f7f3;
-  --foreground: #252f2b;
+  --background: #fbf6ee;
+  --foreground: #1f3b2d;
   --card: #fffefa;
-  --card-foreground: #252f2b;
+  --card-foreground: #1f3b2d;
   --popover: #fffefa;
-  --popover-foreground: #252f2b;
+  --popover-foreground: #1f3b2d;
 
-  --primary: #345b4c;
+  --primary: #1f3b2d;
   --primary-foreground: #ffffff;
 
-  --secondary: #eeeee7;
-  --secondary-foreground: #345b4c;
+  --secondary: #f2ebdf;
+  --secondary-foreground: #1f3b2d;
 
-  --muted: #eeeee7;
-  --muted-foreground: #566158;
+  --muted: #f2ebdf;
+  --muted-foreground: #3d5a4a;
 
-  --accent: #e9eee6;
-  --accent-foreground: #345b4c;
+  --accent: #cfe6d6;
+  --accent-foreground: #1f3b2d;
 
   --destructive: oklch(0.58 0.24 25);
   --destructive-foreground: oklch(0.97 0 0);
 
-  --border: #e1e3d9;
-  --input: #d7dbd1;
-  --ring: #527561;
+  --border: #e6dccb;
+  --input: #d5c9b7;
+  --ring: #e8673f;
 
   --chart-1: oklch(0.65 0.22 25);
   --chart-2: oklch(0.55 0.22 250);
@@ -36,15 +36,15 @@
   --chart-4: oklch(0.6 0.2 330);
   --chart-5: oklch(0.72 0.16 85);
 
-  --radius: 0.8rem;
+  --radius: 1rem;
 
-  --sidebar: #f1f2eb;
-  --sidebar-foreground: #39453e;
-  --sidebar-primary: #345b4c;
+  --sidebar: #fbf6ee;
+  --sidebar-foreground: #3d5a4a;
+  --sidebar-primary: #1f3b2d;
   --sidebar-primary-foreground: oklch(0.97 0 0);
-  --sidebar-accent: #e4eadd;
-  --sidebar-accent-foreground: #345b4c;
-  --sidebar-border: #e1e3d9;
+  --sidebar-accent: #cfe6d6;
+  --sidebar-accent-foreground: #1f3b2d;
+  --sidebar-border: #e6dccb;
   --sidebar-ring: oklch(0.5 0.16 250);
 
   --success: oklch(0.6 0.2 155);
@@ -102,12 +102,9 @@
 }
 
 @theme inline {
-  --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-mono:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    monospace;
+  --font-sans: var(--font-story-body), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-story-heading), Georgia, serif;
+  --font-mono: var(--font-story-label), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

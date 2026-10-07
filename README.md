@@ -52,6 +52,13 @@ Narrator is a full-stack web application that converts written manuscripts (PDF,
 
 ## Author studio redesign
 
+The storybook landing page at `/` uses Gloock headlines, handwritten notes,
+cream and forest-green surfaces, and pressable coral buttons. Open `/library`
+for the working author studio. Pricing remains free, and the book-cover
+placeholders are preserved throughout the redesign.
+
+![Storybook landing page](docs/ui-preview/landing-hero.webp)
+
 The interface uses warm paper surfaces, forest-green accents, editorial headings, and book covers. The creation form keeps your manuscript details until you approve narration, and reuses an uploaded book when retrying a failed generation request. A getting-started guide is available at `/guide`.
 
 ![Desktop author studio](docs/ui-preview/desktop.webp)
@@ -127,11 +134,12 @@ required to render the bundled demo data.
 Narrator/
 ├── app/                      # Next.js App Router
 │   ├── (dashboard)/         # Dashboard pages group
-│   │   ├── page.tsx        # Main dashboard
+│   │   ├── library/         # Author bookshelf (/library)
 │   │   ├── upload/         # Manuscript upload
 │   │   ├── voices/         # Voice selection
 │   │   ├── processing/     # Generation progress
 │   │   └── player/        # Audio playback
+│   ├── page.tsx            # Storybook landing page (/)
 │   └── api/               # API routes
 │       └── books/         # Book endpoints
 ├── components/             # React components

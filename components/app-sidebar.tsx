@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const navigation = [
-  { title: "Your library", href: "/", icon: Library },
+  { title: "Your library", href: "/library", icon: Library },
   { title: "New audiobook", href: "/upload", icon: Plus },
   { title: "Voice studio", href: "/voices", icon: Mic2 },
 ];
@@ -55,7 +55,7 @@ export function AppSidebar() {
           />
           <div>
             <span className="brand-name">
-              narrator<span className="brand-period">.</span>
+              Narrator<span className="brand-period">.</span>
             </span>
             <p className="mt-1 text-[10px] uppercase tracking-[.2em] text-muted-foreground">
               An author’s studio
