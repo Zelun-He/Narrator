@@ -1,4 +1,2 @@
 import { redirect } from "next/navigation";
-export default function Demo() {
-  redirect("/voices");
-}
+export default function Demo() { redirect("/demo/library"); }

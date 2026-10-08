@@ -23,6 +23,15 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
     setBusy(true);
     setError(null);
     try {
+      if (!signup && email.trim().toLowerCase() === "testuser") {
+        if (password !== "123456") {
+          setError("The demo password is 123456.");
+          setBusy(false);
+          return;
+        }
+        window.location.assign("/demo/library");
+        return;
+      }
       const result = signup
         ? await authClient.signUp.email({
             name: name.trim(),
@@ -79,11 +88,11 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{signup ? "Email address" : "Email or demo username"}</Label>
             <Input
               id="email"
-              type="email"
-              autoComplete="email"
+              type={signup ? "email" : "text"}
+              autoComplete={signup ? "email" : "username"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -127,6 +136,11 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
                 : "Log in"}
           </Button>
         </form>
+        {!signup && (
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            Preview the dashboard: <strong>testuser</strong> / <strong>123456</strong>
+          </p>
+        )}
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {signup ? "Already have an account? " : "New to Narrator? "}
           <Link

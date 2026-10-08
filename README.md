@@ -2,6 +2,10 @@
 
 A free, self-hosted author studio: create an account, upload your manuscript, and turn it into an audiobook. The storybook interface includes a private bookshelf, narrator preview, chapter progress and a listening room. There are no paid TTS APIs or subscriptions.
 
+## Preview without the backend
+
+On `/login`, enter **testuser** and **123456** to open the public demo studio at `/demo/library`. This works without SQLite, a worker, or an authentication secret, including on Vercel. The preview uses fictional sample books and the public voice sample. It does not create an author account or session, call private APIs, grant administrator access, accept manuscripts, or save changes. All real author routes still require their normal authenticated session.
+
 ## Run with Docker
 
 Install Docker with Compose, then:
@@ -96,6 +100,7 @@ npm run typecheck
 npm run build
 npm run test:backend
 npm run test:accounts
+npm run test:demo # requires Playwright and Chromium
 ```
 
 The backend integration suite launches an isolated production server and real worker, creates two accounts, and checks ownership, CSRF, upload limits, TXT/DOCX/PDF extraction, actual Piper WAVs, MP3/ZIP validity, Range playback, idempotent uploads, deletion, session revocation, server restarts and worker crash recovery. Install narration dependencies and download the model first. Test data is temporary and removed after the suite.

@@ -37,16 +37,17 @@ export function BookCard({
   progress,
   coverColor,
   onDelete,
-}: BookListItem & { onDelete?: (id: string) => Promise<void> | void }) {
+  demo = false,
+}: BookListItem & { onDelete?: (id: string) => Promise<void> | void; demo?: boolean }) {
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const href =
+  const href = (demo ? "/demo" : "") + (
     status === "completed"
       ? `/player?bookId=${id}`
       : status === "failed"
         ? `/voices?bookId=${id}`
-        : `/processing?bookId=${id}`;
+        : `/processing?bookId=${id}`);
   async function remove() {
     setDeleting(true);
     try {
