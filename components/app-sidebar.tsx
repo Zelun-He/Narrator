@@ -1,17 +1,18 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Upload,
+  Library,
+  Plus,
   Mic2,
-  Loader2,
-  Headphones,
-  Settings,
   HelpCircle,
-  AudioLines,
-} from "lucide-react"
+  ArrowUpRight,
+  Heart,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,89 +24,85 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+  useSidebar,
+} from "@/components/ui/sidebar";
 
-const navMain = [
-  {
-    title: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Upload Manuscript",
-    href: "/upload",
-    icon: Upload,
-  },
-  {
-    title: "Voice Selection",
-    href: "/voices",
-    icon: Mic2,
-  },
-  {
-    title: "Processing",
-    href: "/processing",
-    icon: Loader2,
-  },
-  {
-    title: "Audiobook Player",
-    href: "/player",
-    icon: Headphones,
-  },
-]
+const navigation = [
+  { title: "Your library", href: "/library", icon: Library },
+  { title: "New audiobook", href: "/upload", icon: Plus },
+  { title: "Voice studio", href: "/voices", icon: Mic2 },
+];
 
-const navSecondary = [
-  {
-    title: "Settings",
-    href: "#",
-    icon: Settings,
-  },
-  {
-    title: "Help & Support",
-    href: "#",
-    icon: HelpCircle,
-  },
-]
-
-export function AppSidebar() {
-  const pathname = usePathname()
-
+export function AppSidebar({
+  user,
+}: {
+  user: { name: string; email: string };
+}) {
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  async function logout() {
+    setSigningOut(true);
+    setLogoutError(null);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error();
+      window.location.assign("/login");
+    } catch {
+      setLogoutError("Couldn’t log out. Please try again.");
+      setSigningOut(false);
+    }
+  }
+  const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
   return (
-    <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-[#FF6B6B]">
-                  <AudioLines className="size-4 text-white" />
-                </div>
-                <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="font-semibold">Narrator</span>
-                  <span className="text-xs text-muted-foreground">AI Audiobooks</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar className="studio-sidebar" collapsible="offcanvas">
+      <SidebarHeader className="p-7">
+        <Link
+          href="/"
+          onClick={closeMobile}
+          className="flex items-center gap-3"
+        >
+          <Image
+            src="/brand/narrator-mark.svg"
+            width={40}
+            height={40}
+            alt=""
+            aria-hidden="true"
+            className="brand-mark"
+          />
+          <div>
+            <span className="brand-name">
+              Narrator<span className="brand-period">.</span>
+            </span>
+            <p className="mt-1 text-[10px] uppercase tracking-[.2em] text-muted-foreground">
+              An author’s studio
+            </p>
+          </div>
+        </Link>
       </SidebarHeader>
-      <SidebarSeparator />
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+        <SidebarGroup className="px-5 pt-6">
+          <SidebarGroupLabel className="eyebrow mb-3 text-muted-foreground">
+            Workspace
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {navMain.map((item) => (
-                <SidebarMenuItem key={item.title}>
+            <SidebarMenu className="gap-2">
+              {navigation.map((item) => (
+                <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={item.title}
+                    className="h-11 rounded-lg px-3 text-sm data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                   >
-                    <Link href={item.href}>
-                      <item.icon className="size-4" />
+                    <Link href={item.href} onClick={closeMobile}>
+                      <item.icon size={18} />
                       <span>{item.title}</span>
+                      {pathname === item.href && (
+                        <span className="ml-auto size-1.5 rounded-full bg-primary" />
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -113,42 +110,58 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Support</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navSecondary.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+        <SidebarGroup className="px-5 mt-6">
+          <SidebarGroupLabel className="eyebrow mb-3 text-muted-foreground">
+            Resources
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild className="h-11">
+                <Link href="/guide" onClick={closeMobile}>
+                  <HelpCircle size={18} />
+                  Getting started
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarSeparator />
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
-              <Avatar className="size-8">
-                <AvatarFallback className="bg-[#4ECDC4]/15 text-[#4ECDC4] text-xs font-medium">
-                  JD
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-medium">Jane Doe</span>
-                <span className="text-xs text-muted-foreground">jane@example.com</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="p-5">
+        <div className="mb-3 rounded-lg border p-3">
+          <p className="truncate text-sm font-medium">{user.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <button
+            type="button"
+            disabled={signingOut}
+            onClick={() => void logout()}
+            className="mt-3 text-xs font-semibold text-primary"
+          >
+            {signingOut ? "Logging out…" : "Log out"}
+          </button>
+          {logoutError && (
+            <p role="alert" className="mt-2 text-xs text-destructive">
+              {logoutError}
+            </p>
+          )}
+        </div>
+        <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+          <Heart size={18} className="mb-3 text-primary" />
+          <p className="text-sm font-medium">Made for your stories.</p>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            Free audiobook creation. More room for your imagination.
+          </p>
+          <Link
+            href="/upload"
+            onClick={closeMobile}
+            className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-primary"
+          >
+            Bring a book to life <ArrowUpRight size={14} />
+          </Link>
+        </div>
+        <p className="pt-4 text-center text-[10px] tracking-wider text-muted-foreground">
+          WORDS DESERVE TO BE HEARD
+        </p>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

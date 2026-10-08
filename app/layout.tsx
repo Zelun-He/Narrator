@@ -1,44 +1,55 @@
-import type { Metadata, Viewport } from 'next'
-import { Analytics } from '@vercel/analytics/next'
-import { ThemeProvider } from '@/components/theme-provider'
-import './globals.css'
+import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/theme-provider";
+import { bodyFont, headlineFont, labelFont, noteFont } from "./fonts";
+import "./globals.css";
+import "./book-cover.css";
 
 export const metadata: Metadata = {
-  title: 'Narrator - AI Audiobook Generator',
-  description: 'Transform your manuscripts into professional audiobooks with AI-powered narration.',
+  title: "Narrator — Free Audiobook Studio",
+  description:
+    "Give your book a voice. A free audiobook creation studio for authors.",
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
+        url: "/brand/narrator-favicon.ico",
+        sizes: "16x16 32x32 48x48",
+        type: "image/x-icon",
       },
       {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
+        url: "/brand/narrator-favicon-32.png",
+        sizes: "32x32",
+        type: "image/png",
       },
+      { url: "/brand/narrator-mark.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    shortcut: "/brand/narrator-favicon.ico",
+    apple: [
       {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: "/brand/narrator-apple-touch.png",
+        sizes: "180x180",
+        type: "image/png",
       },
     ],
-    apple: '/apple-icon.png',
   },
-}
+};
 
 export const viewport: Viewport = {
-  themeColor: '#1a1a24',
-  width: 'device-width',
+  themeColor: "#1f3b2d",
+  width: "device-width",
   initialScale: 1,
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body
+        className={`${bodyFont.variable} ${headlineFont.variable} ${noteFont.variable} ${labelFont.variable} font-sans antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -50,5 +61,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }

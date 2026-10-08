@@ -1,214 +1,239 @@
-"use client"
-
-export const dynamic = "force-dynamic"
-
-import { Suspense, useEffect, useState } from "react"
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { CheckCircle2, Circle, Loader2, Clock, ArrowRight, AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import type { BookDetails, ChapterStatus } from "@/lib/audiobook-types"
-
-function chapterStatusSignature(book: BookDetails | null): string {
-  if (!book) return "none"
-  return `${book.status}:${book.progress}:${book.chaptersList.map((c) => c.status).join("|")}`
-}
-
+"use client";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  CheckCircle2,
+  Circle,
+  Loader2,
+  ArrowRight,
+  AlertTriangle,
+  AudioLines,
+  RefreshCw,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import {
+  CreationSteps,
+  LibraryLink,
+  PageHeading,
+} from "@/components/studio-elements";
+import type { BookDetails, ChapterStatus } from "@/lib/audiobook-types";
 function StatusIcon({ status }: { status: ChapterStatus }) {
-  switch (status) {
-    case "completed":
-      return <CheckCircle2 className="size-4 text-[#4ECDC4]" />
-    case "processing":
-      return <Loader2 className="size-4 animate-spin text-[#FF6B6B]" />
-    case "pending":
-      return <Circle className="size-4 text-muted-foreground/40" />
-    case "failed":
-      return <AlertTriangle className="size-4 text-destructive" />
-  }
+  return status === "completed" ? (
+    <CheckCircle2 size={17} className="text-primary" />
+  ) : status === "processing" ? (
+    <Loader2 size={17} className="animate-spin text-primary" />
+  ) : status === "failed" ? (
+    <AlertTriangle size={17} className="text-destructive" />
+  ) : (
+    <Circle size={17} className="text-muted-foreground/40" />
+  );
 }
-
-function statusLabel(status: ChapterStatus) {
-  switch (status) {
-    case "completed":
-      return "Completed"
-    case "processing":
-      return "Processing"
-    case "pending":
-      return "Pending"
-    case "failed":
-      return "Failed"
-  }
-}
-
-function ProcessingPageContent() {
-  const searchParams = useSearchParams()
-  const bookId = searchParams.get("bookId")
-  const [book, setBook] = useState<BookDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-
+function ProcessingContent() {
+  const bookId = useSearchParams().get("bookId");
+  const [book, setBook] = useState<BookDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!bookId) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
-
-    let mounted = true
-    let intervalId: ReturnType<typeof setInterval> | null = null
-    const loadBook = async () => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function load() {
       try {
-        const response = await fetch(`/api/books/${bookId}`, { cache: "no-store" })
-        if (!response.ok) {
-          if (mounted) setLoading(false)
-          return
+        const r = await fetch(`/api/books/${bookId}`, { cache: "no-store" });
+        if (!r.ok)
+          throw new Error(
+            r.status === 404
+              ? "This audiobook couldn’t be found."
+              : "Progress couldn’t load. Please try again.",
+          );
+        const d = await r.json();
+        if (active) {
+          setBook(d.book);
+          setError(null);
+          if (d.book.status === "processing") timer = setTimeout(load, 2000);
         }
-
-        const data = (await response.json()) as { book: BookDetails }
-        if (!mounted) return
-
-        setBook((prev) => {
-          if (chapterStatusSignature(prev) === chapterStatusSignature(data.book)) {
-            return prev
-          }
-          return data.book
-        })
-        setLoading(false)
-
-        // Stop polling once complete to prevent unnecessary rerenders.
-        if (data.book.status === "completed" && intervalId) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
-      } catch {
-        if (mounted) setLoading(false)
+      } catch (e) {
+        if (active)
+          setError(
+            e instanceof Error
+              ? e.message
+              : "Connection interrupted. Please try again.",
+          );
+      } finally {
+        if (active) setLoading(false);
       }
     }
-
-    void loadBook()
-    intervalId = setInterval(() => {
-      void loadBook()
-    }, 2000)
+    void load();
     return () => {
-      mounted = false
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [bookId])
-
-  const chapters = book?.chaptersList ?? []
-  const completedCount = chapters.filter((chapter) => chapter.status === "completed").length
-  const totalCount = chapters.length
-  const isComplete = book?.status === "completed"
-
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [bookId, retry]);
+  const chapters = book?.chaptersList ?? [];
+  const ready = chapters.filter((c) => Boolean(c.audioUrl)).length;
+  const complete = book?.status === "completed";
+  const failed = book?.status === "failed";
+  const completed = chapters.filter((c) => c.status === "completed").length;
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">Generating Audiobook</h1>
-        <p className="text-sm text-muted-foreground">
-          {book ? `Your audiobook "${book.title}" is being generated by AI.` : "Loading audiobook status..."}
-        </p>
-      </div>
-
-      <Card className="saas-surface border-white/40">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Overall Progress</CardTitle>
-              <CardDescription>
-                {isComplete
-                  ? "All chapters completed!"
-                  : `${completedCount} of ${totalCount} chapters completed`}
-              </CardDescription>
-            </div>
-            <span className="text-2xl font-semibold text-[#FF6B6B]">
-              {book?.progress ?? 0}%
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Progress value={book?.progress ?? 0} className="h-2" />
-        </CardContent>
-      </Card>
-
-      <Card className="saas-surface border-white/40">
-        <CardHeader>
-          <CardTitle className="text-base">Chapters</CardTitle>
-          <CardDescription>Track the progress of each chapter.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!bookId ? (
-            <p className="text-sm text-muted-foreground">
-              No audiobook selected. Go to the dashboard and open progress for a specific book.
-            </p>
-          ) : loading ? (
-            <p className="text-sm text-muted-foreground">Loading chapter progress...</p>
-          ) : (
-            <div className="flex flex-col divide-y">
-            {chapters.map((chapter) => (
-              <div
-                key={chapter.id}
-                className={cn(
-                  "flex items-center justify-between py-3",
-                  chapter.status === "processing" && "bg-[#FF6B6B]/5 -mx-6 px-6 rounded-md"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <StatusIcon status={chapter.status} />
-                  <span
-                    className={cn(
-                      "text-sm",
-                      chapter.status === "pending" && "text-muted-foreground",
-                      chapter.status === "processing" && "font-medium"
-                    )}
-                  >
-                    {chapter.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {chapter.duration && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="size-3" />
-                      {chapter.duration}
-                    </div>
-                  )}
-                  <span
-                    className={cn(
-                      "rounded-sm px-2 py-0.5 text-[10px] font-medium",
-                      chapter.status === "completed" && "bg-[#4ECDC4]/10 text-[#4ECDC4]",
-                      chapter.status === "processing" && "bg-[#FF6B6B]/10 text-[#FF6B6B]",
-                      chapter.status === "pending" && "bg-muted text-muted-foreground",
-                      chapter.status === "failed" && "bg-destructive/10 text-destructive"
-                    )}
-                  >
-                    {statusLabel(chapter.status)}
-                  </span>
-                </div>
-              </div>
-            ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {isComplete && bookId && (
-        <div className="flex justify-end">
+    <div className="studio-container studio-container-narrow">
+      <LibraryLink />
+      <PageHeading
+        eyebrow="THE NEXT CHAPTER"
+        title={
+          failed
+            ? "Let’s try that again."
+            : complete
+              ? "Your narration results."
+              : "Your words are finding a voice."
+        }
+        description={
+          book
+            ? `“${book.title}” by ${book.author}. Follow your story, one chapter at a time.`
+            : "Follow your audiobook’s narration progress here."
+        }
+      />
+      <CreationSteps current={3} />
+      {!bookId ? (
+        <div className="empty-state">
+          <AudioLines size={30} />
+          <h2 className="font-serif text-2xl">Choose a story to follow.</h2>
+          <p className="text-sm text-muted-foreground">
+            Open an audiobook from your library to view its progress.
+          </p>
           <Button asChild>
-            <Link href={`/player?bookId=${bookId}`}>
-              Listen Now
-              <ArrowRight className="size-4" />
+            <Link href="/library">
+              Go to library
+              <ArrowRight size={15} />
             </Link>
           </Button>
         </div>
-      )}
+      ) : error ? (
+        <div role="alert" className="empty-state">
+          <p>{error}</p>
+          <Button variant="outline" onClick={() => setRetry((r) => r + 1)}>
+            <RefreshCw size={14} />
+            Try again
+          </Button>
+        </div>
+      ) : loading ? (
+        <div className="studio-panel flex items-center gap-3" aria-busy="true">
+          <Loader2 className="animate-spin" size={18} />
+          Loading your chapters…
+        </div>
+      ) : book ? (
+        <>
+          <section className="studio-panel">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <h2 className="panel-title">
+                  {failed
+                    ? "Narration needs attention"
+                    : complete
+                      ? "Processing finished"
+                      : book.jobState === "queued"
+                        ? "Waiting to narrate"
+                        : "Creating your narration"}
+                </h2>
+                <p className="panel-description">
+                  {completed} of {chapters.length} chapters processed · {ready}{" "}
+                  with audio available
+                </p>
+              </div>
+              <span className="font-serif text-4xl text-primary">
+                {book.progress}%
+              </span>
+            </div>
+            <Progress
+              aria-label="Overall narration progress"
+              value={book.progress}
+              className="mt-6 h-2"
+            />
+            <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+              {complete && ready === 0
+                ? "No playable audio is available yet. Try narration again, or return to your library."
+                : failed
+                  ? "Your manuscript and finished chapters are saved. Retry to continue from where narration stopped."
+                  : complete
+                    ? "Available chapters are ready in the listening room."
+                    : book.workerAvailable
+                      ? "Longer manuscripts take more time. You can close this page and come back; narration continues in the background."
+                      : "Your manuscript is safely queued. The narration worker is currently offline; creation will begin when it reconnects."}
+            </p>
+          </section>
+          {book.generationError && (
+            <p role="alert" className="mt-4 text-sm text-destructive">
+              {book.generationError}
+            </p>
+          )}
+          <section className="studio-panel mt-6">
+            <h2 className="panel-title">Chapter by chapter</h2>
+            <div className="mt-5 divide-y">
+              {chapters.map((chapter, i) => (
+                <div key={chapter.id} className="flex items-center gap-3 py-4">
+                  <span className="w-5 shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <StatusIcon status={chapter.status} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{chapter.name}</p>
+                    {chapter.generationError && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {chapter.generationError}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    {chapter.audioUrl
+                      ? "Audio ready"
+                      : chapter.status === "completed"
+                        ? "Processed"
+                        : chapter.status === "processing"
+                          ? "Narrating"
+                          : chapter.status === "failed"
+                            ? "Needs attention"
+                            : "Queued"}
+                  </span>
+                  {chapter.audioUrl && chapter.duration && (
+                    <span className="hidden text-xs tabular-nums text-muted-foreground sm:inline">
+                      {chapter.duration}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
+            {(failed || (complete && ready === 0)) && (
+              <Button variant="outline" asChild>
+                <Link href={`/voices?bookId=${bookId}`}>Retry narration</Link>
+              </Button>
+            )}
+            {ready > 0 && (
+              <Button asChild>
+                <Link href={`/player?bookId=${bookId}`}>
+                  Open listening room
+                  <ArrowRight size={16} />
+                </Link>
+              </Button>
+            )}
+          </div>
+        </>
+      ) : null}
     </div>
-  )
+  );
 }
-
 export default function ProcessingPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading processing status...</div>}>
-      <ProcessingPageContent />
+    <Suspense
+      fallback={<div className="studio-container">Loading narration…</div>}
+    >
+      <ProcessingContent />
     </Suspense>
-  )
+  );
 }

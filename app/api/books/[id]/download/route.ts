@@ -1,69 +1,62 @@
-import { NextResponse } from "next/server"
-import { getBook } from "@/lib/server/audiobook-store"
-
-export const runtime = "nodejs"
-
-function getFormatMeta(format: string) {
-  switch (format) {
-    case "mp3":
-      return {
-        contentType: "audio/mpeg",
-        extension: "mp3",
-        label: "MP3 bundle placeholder",
-      }
-    case "m4b":
-      return {
-        contentType: "audio/mp4",
-        extension: "m4b",
-        label: "M4B audiobook placeholder",
-      }
-    case "zip":
-      return {
-        contentType: "application/zip",
-        extension: "zip",
-        label: "ZIP chapters placeholder",
-      }
-    default:
-      return null
-  }
-}
-
+import { Readable } from "node:stream";
+import { ZipFile } from "yazl";
+import { ownedBook, chapterRows } from "@/lib/server/audiobook-store";
+import { withUser, ApiError } from "@/lib/server/api";
+import {
+  audioResponse,
+  attachment,
+  safeAudioPath,
+} from "@/lib/server/audio-response";
+import { stat } from "node:fs/promises";
+export const runtime = "nodejs";
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params
-  const book = await getBook(id)
-  if (!book) {
-    return NextResponse.json({ error: "Book not found." }, { status: 404 })
-  }
-
-  const url = new URL(request.url)
-  const format = url.searchParams.get("format")?.toLowerCase() ?? ""
-  const meta = getFormatMeta(format)
-
-  if (!meta) {
-    return NextResponse.json({ error: "Unsupported format." }, { status: 400 })
-  }
-
-  const payload = [
-    `Narrator export`,
-    `Book: ${book.title}`,
-    `Author: ${book.author}`,
-    `Voice: ${book.voiceName ?? "Not selected"}`,
-    `Format: ${format.toUpperCase()}`,
-    `Generated: ${new Date().toISOString()}`,
-    "",
-    "This is a placeholder file from the demo backend flow.",
-  ].join("\n")
-
-  const filename = `${book.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.${meta.extension}`
-  const data = new TextEncoder().encode(payload)
-
-  return new NextResponse(data, {
-    headers: {
-      "Content-Type": meta.contentType,
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  })
+  const { id } = await params;
+  return withUser(request, async (user) => {
+    const book = ownedBook(user.id, id),
+      format = new URL(request.url).searchParams.get("format") || "mp3";
+    if (book.status !== "completed" || !book.mp3_path)
+      throw new ApiError(
+        409,
+        "Your audiobook download will be ready when narration finishes.",
+      );
+    if (format === "mp3")
+      return audioResponse(
+        request,
+        book.mp3_path,
+        "audio/mpeg",
+        attachment(book.title, "mp3"),
+      );
+    if (format !== "zip")
+      throw new ApiError(400, "Choose MP3 or ZIP chapter audio.");
+    const chapters = chapterRows(id);
+    for (const chapter of chapters) {
+      if (!chapter.audio_path)
+        throw new ApiError(409, "Chapter audio is incomplete.");
+      await stat(safeAudioPath(chapter.audio_path)).catch(() => {
+        throw new ApiError(404, "A chapter file is unavailable.");
+      });
+    }
+    const zip = new ZipFile();
+    const output = zip.outputStream as Readable;
+    zip.on("error", (error) => output.destroy(error));
+    for (const chapter of chapters)
+      zip.addFile(
+        chapter.audio_path!,
+        `${String(chapter.chapter_index + 1).padStart(3, "0")}-${chapter.name.replace(/[^a-zA-Z0-9 _-]/g, "_").slice(0, 80)}.wav`,
+        { compress: false },
+      );
+    zip.end();
+    request.signal.addEventListener("abort", () => output.destroy(), {
+      once: true,
+    });
+    return new Response(Readable.toWeb(output) as ReadableStream, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": attachment(book.title, "zip"),
+      },
+    });
+  });
 }

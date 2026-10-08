@@ -1,0 +1,66 @@
+/* Shared book-cover placeholders, preserved across the landing page and studio. */
+@layer components {
+  .book-cover {
+    position: relative;
+    width: 150px;
+    height: 205px;
+    border-radius: 3px 7px 7px 3px;
+    box-shadow:
+      inset 5px 0 4px #0002,
+      inset 7px 0 0 #fff1,
+      inset -2px 0 0 #fff1,
+      4px 4px 0 #dbd4bf;
+    color: #fffaf0;
+    padding: 18px 17px 14px 20px;
+    overflow: hidden;
+  }
+  .cover-edition {
+    font-size: 6px;
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+  }
+  .cover-title {
+    position: relative;
+    z-index: 1;
+    font-family: Georgia, serif;
+    font-size: 24px;
+    line-height: 1.13;
+    margin-top: 32px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cover-author {
+    position: absolute;
+    bottom: 26px;
+    left: 20px;
+    right: 16px;
+    font-size: 7px;
+    letter-spacing: 1.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cover-mark {
+    position: absolute;
+    bottom: 9px;
+    left: 20px;
+    opacity: 0.65;
+    width: 12px;
+  }
+  .cover-orbit {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    border: 1px solid #ffffff24;
+    right: -65px;
+    top: 45px;
+    box-shadow:
+      0 0 0 25px #ffffff09,
+      0 0 0 50px #ffffff06;
+  }
+}

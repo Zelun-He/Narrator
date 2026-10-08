@@ -1,134 +1,93 @@
-import path from "node:path"
-
+import { ApiError } from "./errors";
+import { MAX_CHAPTERS, MAX_TEXT_CHARACTERS, MAX_WORDS } from "./runtime";
 export interface ChapterSeed {
-  name: string
-  content: string
+  name: string;
+  content: string;
 }
-
-export type ChapterParseStrategy = "heading" | "paragraph" | "default"
-
+export type ChapterParseStrategy = "heading" | "paragraph" | "default";
 export interface ChapterParseSourceStats {
-  characterCount: number
-  paragraphCount: number
-  headingCount: number
+  characterCount: number;
+  paragraphCount: number;
+  headingCount: number;
 }
-
 export interface ChapterParseResult {
-  chapters: ChapterSeed[]
-  strategy: ChapterParseStrategy
-  sourceStats: ChapterParseSourceStats
+  chapters: ChapterSeed[];
+  strategy: ChapterParseStrategy;
+  sourceStats: ChapterParseSourceStats;
 }
 
-const DEFAULT_CHAPTER_COUNT = 10
-const MAX_CHAPTERS = 50
-const MIN_CHUNK_SIZE = 2800
-
-function normalizeChapterName(raw: string, index: number): string {
-  const trimmed = raw.trim().replace(/[\s:.-]+$/g, "")
-  if (!trimmed) return `Chapter ${index + 1}`
-  return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed
-}
-
-function chunkByParagraphs(text: string): ChapterSeed[] {
-  const clean = text.replace(/\r\n/g, "\n").trim()
-  if (!clean) {
-    return Array.from({ length: DEFAULT_CHAPTER_COUNT }, (_, index) => ({
-      name: `Chapter ${index + 1}`,
-      content: "",
-    }))
-  }
-
-  const paragraphs = clean
-    .split(/\n{2,}/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-
-  const approxCount = Math.max(1, Math.min(MAX_CHAPTERS, Math.ceil(clean.length / MIN_CHUNK_SIZE)))
-  const perChapter = Math.max(1, Math.ceil(paragraphs.length / approxCount))
-
-  const chapters: ChapterSeed[] = []
-  for (let i = 0; i < paragraphs.length; i += perChapter) {
-    const body = paragraphs.slice(i, i + perChapter).join("\n\n")
-    chapters.push({
-      name: `Chapter ${chapters.length + 1}`,
-      content: body,
-    })
-  }
-
-  return chapters.slice(0, MAX_CHAPTERS)
-}
-
-function splitByHeadings(text: string): ChapterSeed[] {
-  const clean = text.replace(/\r\n/g, "\n").trim()
-  if (!clean) return []
-
-  const heading = /^\s*((chapter|part|section)\s+[\w\-.:]+.*?)\s*$/gim
-  const markers: Array<{ name: string; index: number }> = []
-
-  for (const match of clean.matchAll(heading)) {
-    const name = normalizeChapterName(match[1] ?? "", markers.length)
-    markers.push({ name, index: match.index ?? 0 })
-  }
-
-  if (markers.length < 2) return []
-
-  const chapters: ChapterSeed[] = []
-  for (let i = 0; i < markers.length; i += 1) {
-    const start = markers[i].index
-    const end = markers[i + 1]?.index ?? clean.length
-    const content = clean.slice(start, end).trim()
-    chapters.push({ name: markers[i].name, content })
-  }
-
-  return chapters.slice(0, MAX_CHAPTERS)
-}
-
-function getSourceStats(textContent: string): ChapterParseSourceStats {
-  const clean = textContent.replace(/\r\n/g, "\n").trim()
-  const heading = /^\s*((chapter|part|section)\s+[\w\-.:]+.*?)\s*$/gim
-
-  const headingCount = [...clean.matchAll(heading)].length
-  const paragraphCount = clean
-    ? clean
-        .split(/\n{2,}/)
-        .map((part) => part.trim())
-        .filter(Boolean).length
-    : 0
-
-  return {
-    characterCount: clean.length,
-    paragraphCount,
-    headingCount,
-  }
-}
-
-export function buildChapterSeeds(fileName: string, textContent: string): ChapterParseResult {
-  const ext = path.extname(fileName).toLowerCase()
-  const sourceStats = getSourceStats(textContent)
-
-  if (ext === ".txt") {
-    const headingSplit = splitByHeadings(textContent)
-    if (headingSplit.length > 0) {
-      return {
-        chapters: headingSplit,
-        strategy: "heading",
-        sourceStats,
+export function buildChapterSeeds(
+  _fileName: string,
+  textContent: string,
+): ChapterParseResult {
+  const text = textContent
+    .replace(/\r\n?/g, "\n")
+    .replace(/\uFEFF/g, "")
+    .trim();
+  if (!text || !/[\p{L}\p{N}]/u.test(text))
+    throw new ApiError(400, "The manuscript has no readable text.");
+  if (text.includes("\0"))
+    throw new ApiError(
+      400,
+      "Please upload a UTF-8 text manuscript, DOCX, or text-based PDF.",
+    );
+  if (
+    text.length > MAX_TEXT_CHARACTERS ||
+    text.split(/\s+/u).length > MAX_WORDS
+  )
+    throw new ApiError(413, "The manuscript exceeds the 100,000-word limit.");
+  const headings = [
+    ...text.matchAll(
+      /^[ \t]*((?:chapter|part|section)[ \t]+[^\n]{1,115})[ \t]*$/gim,
+    ),
+  ];
+  const paragraphs = text.split(/\n\s*\n/).filter((part) => part.trim());
+  const chapters: ChapterSeed[] = [];
+  if (headings.length) {
+    const first = headings[0].index ?? 0;
+    if (text.slice(0, first).trim())
+      chapters.push({
+        name: "Opening pages",
+        content: text.slice(0, first).trim(),
+      });
+    headings.forEach((heading, i) =>
+      chapters.push({
+        name: heading[1].trim(),
+        content: text
+          .slice(heading.index, headings[i + 1]?.index ?? text.length)
+          .trim(),
+      }),
+    );
+  } else {
+    let body = "";
+    for (const paragraph of paragraphs) {
+      if (body && body.length + paragraph.length > 12_000) {
+        chapters.push({
+          name: `Chapter ${chapters.length + 1}`,
+          content: body.trim(),
+        });
+        body = "";
       }
+      body += paragraph + "\n\n";
     }
-
-    return {
-      chapters: chunkByParagraphs(textContent),
-      strategy: "paragraph",
-      sourceStats,
-    }
+    if (body.trim())
+      chapters.push({
+        name: `Chapter ${chapters.length + 1}`,
+        content: body.trim(),
+      });
   }
-
+  if (chapters.length > MAX_CHAPTERS)
+    throw new ApiError(
+      413,
+      `The manuscript has more than ${MAX_CHAPTERS} chapters. Please split it into smaller books.`,
+    );
   return {
-    chapters: Array.from({ length: DEFAULT_CHAPTER_COUNT }, (_, index) => ({
-      name: `Chapter ${index + 1}`,
-      content: "",
-    })),
-    strategy: "default",
-    sourceStats,
-  }
+    chapters,
+    strategy: headings.length ? "heading" : "paragraph",
+    sourceStats: {
+      characterCount: text.length,
+      paragraphCount: paragraphs.length,
+      headingCount: headings.length,
+    },
+  };
 }

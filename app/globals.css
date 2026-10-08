@@ -1,62 +1,52 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light premium base - warm off-white */
-  --background: oklch(0.975 0.002 260);
-  --foreground: oklch(0.16 0.01 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.01 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.01 260);
+  --background: #fbf6ee;
+  --foreground: #1f3b2d;
+  --card: #fffefa;
+  --card-foreground: #1f3b2d;
+  --popover: #fffefa;
+  --popover-foreground: #1f3b2d;
 
-  /* Primary - deep charcoal for contrast */
-  --primary: oklch(0.18 0.01 260);
-  --primary-foreground: oklch(0.97 0 0);
+  --primary: #1f3b2d;
+  --primary-foreground: #ffffff;
 
-  /* Secondary - soft cool gray surface */
-  --secondary: oklch(0.945 0.005 260);
-  --secondary-foreground: oklch(0.25 0.01 260);
+  --secondary: #f2ebdf;
+  --secondary-foreground: #1f3b2d;
 
-  /* Muted */
-  --muted: oklch(0.94 0.003 260);
-  --muted-foreground: oklch(0.46 0.01 260);
+  --muted: #f2ebdf;
+  --muted-foreground: #3d5a4a;
 
-  /* Accent */
-  --accent: oklch(0.94 0.008 260);
-  --accent-foreground: oklch(0.2 0.01 260);
+  --accent: #cfe6d6;
+  --accent-foreground: #1f3b2d;
 
-  /* Destructive */
   --destructive: oklch(0.58 0.24 25);
   --destructive-foreground: oklch(0.97 0 0);
 
-  /* Borders & inputs */
-  --border: oklch(0.9 0.005 260);
-  --input: oklch(0.9 0.005 260);
-  --ring: oklch(0.5 0.16 250);
+  --border: #e6dccb;
+  --input: #d5c9b7;
+  --ring: #e8673f;
 
-  /* Charts - vibrant pops */
   --chart-1: oklch(0.65 0.22 25);
   --chart-2: oklch(0.55 0.22 250);
   --chart-3: oklch(0.68 0.2 145);
   --chart-4: oklch(0.6 0.2 330);
   --chart-5: oklch(0.72 0.16 85);
 
-  --radius: 0.625rem;
+  --radius: 1rem;
 
-  /* Sidebar - clean light */
-  --sidebar: oklch(0.98 0.003 260);
-  --sidebar-foreground: oklch(0.2 0.01 260);
-  --sidebar-primary: oklch(0.18 0.01 260);
+  --sidebar: #fbf6ee;
+  --sidebar-foreground: #3d5a4a;
+  --sidebar-primary: #1f3b2d;
   --sidebar-primary-foreground: oklch(0.97 0 0);
-  --sidebar-accent: oklch(0.94 0.008 260);
-  --sidebar-accent-foreground: oklch(0.2 0.01 260);
-  --sidebar-border: oklch(0.9 0.005 260);
+  --sidebar-accent: #cfe6d6;
+  --sidebar-accent-foreground: #1f3b2d;
+  --sidebar-border: #e6dccb;
   --sidebar-ring: oklch(0.5 0.16 250);
 
-  /* Status colors */
   --success: oklch(0.6 0.2 155);
   --success-foreground: oklch(0.97 0 0);
   --warning: oklch(0.72 0.16 85);
@@ -64,57 +54,47 @@
 }
 
 .dark {
-  /* Dark premium base - deep charcoal */
-  --background: oklch(0.14 0.005 260);
-  --foreground: oklch(0.93 0 0);
-  --card: oklch(0.18 0.005 260);
-  --card-foreground: oklch(0.93 0 0);
-  --popover: oklch(0.18 0.005 260);
-  --popover-foreground: oklch(0.93 0 0);
+  --background: #18211c;
+  --foreground: #e9ede3;
+  --card: #202b24;
+  --card-foreground: #e9ede3;
+  --popover: #202b24;
+  --popover-foreground: #e9ede3;
 
-  /* Primary - clean off-white for elegance */
-  --primary: oklch(0.93 0 0);
-  --primary-foreground: oklch(0.14 0.005 260);
+  --primary: #b3ceb6;
+  --primary-foreground: #182b20;
 
-  /* Secondary - raised surface */
-  --secondary: oklch(0.22 0.005 260);
-  --secondary-foreground: oklch(0.85 0 0);
+  --secondary: #2c392f;
+  --secondary-foreground: #e9ede3;
 
-  /* Muted - subtle backgrounds */
-  --muted: oklch(0.22 0.005 260);
-  --muted-foreground: oklch(0.58 0 0);
+  --muted: #2b372f;
+  --muted-foreground: #abb6ab;
 
-  /* Accent - slightly lighter surface */
-  --accent: oklch(0.24 0.008 260);
-  --accent-foreground: oklch(0.9 0 0);
+  --accent: #2d3c32;
+  --accent-foreground: #d3e3cc;
 
-  /* Destructive */
   --destructive: oklch(0.65 0.25 25);
   --destructive-foreground: oklch(0.93 0 0);
 
-  /* Borders & inputs */
-  --border: oklch(0.26 0.005 260);
-  --input: oklch(0.24 0.005 260);
-  --ring: oklch(0.55 0.18 250);
+  --border: #364339;
+  --input: #445449;
+  --ring: #b3ceb6;
 
-  /* Charts - vibrant pops */
   --chart-1: oklch(0.72 0.22 25);
   --chart-2: oklch(0.65 0.25 250);
   --chart-3: oklch(0.78 0.2 145);
   --chart-4: oklch(0.7 0.22 330);
   --chart-5: oklch(0.8 0.18 85);
 
-  /* Sidebar - slightly lighter dark */
-  --sidebar: oklch(0.16 0.005 260);
-  --sidebar-foreground: oklch(0.85 0 0);
+  --sidebar: #1c271f;
+  --sidebar-foreground: #d3ded2;
   --sidebar-primary: oklch(0.93 0 0);
   --sidebar-primary-foreground: oklch(0.14 0.005 260);
-  --sidebar-accent: oklch(0.22 0.01 260);
-  --sidebar-accent-foreground: oklch(0.9 0 0);
-  --sidebar-border: oklch(0.24 0.005 260);
+  --sidebar-accent: #2c3d2f;
+  --sidebar-accent-foreground: #d3e3cc;
+  --sidebar-border: #364339;
   --sidebar-ring: oklch(0.55 0.18 250);
 
-  /* Status colors */
   --success: oklch(0.72 0.2 155);
   --success-foreground: oklch(0.14 0.005 260);
   --warning: oklch(0.8 0.18 85);
@@ -122,8 +102,9 @@
 }
 
 @theme inline {
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: var(--font-story-body), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-story-heading), Georgia, serif;
+  --font-mono: var(--font-story-label), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -178,8 +159,16 @@
 @layer utilities {
   .saas-page-gradient {
     background-image:
-      radial-gradient(circle at top right, color-mix(in oklab, var(--color-chart-2) 10%, transparent) 0%, transparent 52%),
-      radial-gradient(circle at top left, color-mix(in oklab, var(--color-chart-3) 10%, transparent) 0%, transparent 45%);
+      radial-gradient(
+        circle at top right,
+        color-mix(in oklab, var(--color-chart-2) 10%, transparent) 0%,
+        transparent 52%
+      ),
+      radial-gradient(
+        circle at top left,
+        color-mix(in oklab, var(--color-chart-3) 10%, transparent) 0%,
+        transparent 45%
+      );
   }
 
   .saas-surface {

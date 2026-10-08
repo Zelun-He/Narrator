@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+data
+models
+.venv
+tools/piper
+__pycache__

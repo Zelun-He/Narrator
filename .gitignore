@@ -8,3 +8,12 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+
+tsconfig.tsbuildinfo
+
+# Private author data and local narration runtime
+data/private/
+models/
+.venv/
+.env
+__pycache__/

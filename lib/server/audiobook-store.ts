@@ -1,378 +1,263 @@
-import { mkdir, rm, writeFile } from "node:fs/promises"
-import path from "node:path"
-import crypto from "node:crypto"
+import { randomUUID, createHash } from "node:crypto";
+import { writeFile, rm } from "node:fs/promises";
+import path from "node:path";
+import { getDatabase } from "./database";
+import { ApiError } from "./errors";
+import { AUDIO_DIR, UPLOADS_DIR, MAX_ACTIVE_BOOKS } from "./runtime";
+import { parseManuscript } from "./manuscript-processor";
 import type {
   BookDetails,
   BookListItem,
-  BookStatus,
-  Chapter,
   ChapterStatus,
-} from "@/lib/audiobook-types"
-import { buildChapterSeeds } from "@/lib/server/chapter-parser"
-import { storeAdapter } from "@/lib/server/persistence"
-import type { BookRecord } from "@/lib/server/store-types"
+  BookStatus,
+} from "@/lib/audiobook-types";
 
-const DATA_DIR = path.join(process.cwd(), "data")
-const UPLOADS_DIR = path.join(DATA_DIR, "uploads")
-const CHAPTER_SECONDS = 8
-
-const COVER_COLORS = ["#FF6B6B", "#4ECDC4", "#F59E0B", "#A78BFA", "#0EA5E9", "#FF9F43"]
-
-interface CreateBookInput {
-  title: string
-  author: string
-  language: string
-  fileName: string
-  fileType: string
-  fileSize: number
-  status: BookStatus
-  progress: number
-  coverColor: string
-  chaptersList: Chapter[]
-  voiceId: string | null
-  voiceName: string | null
-  generationStartedAt: string | null
-  createdAt: string
-  updatedAt: string
-  // Audio generation fields
-  uploadedFileName?: string
-  uploadedFilePath?: string
-  audioDirectory?: string
-  failedChapters?: string[]
-  generationError?: string
+export interface BookRow {
+  id: string;
+  owner_id: string;
+  title: string;
+  author: string;
+  language: string;
+  status: BookStatus;
+  cover_color: string;
+  created_at: string;
+  voice_id: string;
+  voice_name: string;
+  error: string | null;
+  mp3_path: string | null;
+  stored_file_name: string;
+  request_key: string;
+  fingerprint: string;
 }
-
-interface StoreData {
-  books: BookRecord[]
+export interface ChapterRow {
+  id: string;
+  book_id: string;
+  chapter_index: number;
+  name: string;
+  text_content: string;
+  status: ChapterStatus;
+  duration_seconds: number | null;
+  audio_path: string | null;
+  audio_size: number | null;
+  error: string | null;
 }
-
-export interface BookStatusSnapshot {
-  bookId: string
-  status: BookStatus
-  progress: number
-  chapterStats: {
-    total: number
-    completed: number
-    processing: number
-    pending: number
-    failed: number
-  }
-  activeChapter: Chapter | null
-  startedAt: string | null
-  updatedAt: string
-  parserMetadata?: {
-    strategy?: BookRecord["parserStrategy"]
-    sourceStats?: BookRecord["parserSourceStats"]
-  }
+export function ownedBook(ownerId: string, id: string): BookRow {
+  const book = getDatabase()
+    .prepare("SELECT * FROM books WHERE id=? AND owner_id=?")
+    .get(id, ownerId) as BookRow | undefined;
+  if (!book) throw new ApiError(404, "Audiobook not found.");
+  return book;
 }
-
-function getDurationLabel(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const sec = String(seconds % 60).padStart(2, "0")
-  return `${minutes}:${sec}`
+export function chapterRows(id: string) {
+  return getDatabase()
+    .prepare("SELECT * FROM chapters WHERE book_id=? ORDER BY chapter_index")
+    .all(id) as ChapterRow[];
 }
-
-function mapToListItem(book: BookRecord): BookListItem {
+function details(row: BookRow): BookDetails {
+  const chapters = chapterRows(row.id);
+  const job = getDatabase()
+    .prepare("SELECT status FROM jobs WHERE book_id=?")
+    .get(row.id) as { status: BookDetails["jobState"] } | undefined;
+  const heartbeat = getDatabase()
+    .prepare("SELECT MAX(last_seen) AS time FROM worker_heartbeat")
+    .get() as { time: number | null };
   return {
-    id: book.id,
-    title: book.title,
-    author: book.author,
-    language: book.language,
-    status: book.status,
-    chapters: book.chaptersList.length,
-    progress: book.progress,
-    coverColor: book.coverColor,
-    createdAt: book.createdAt,
-    voiceId: book.voiceId,
-    voiceName: book.voiceName,
-  }
-}
-
-function mapToDetails(book: BookRecord): BookDetails {
-  return {
-    ...mapToListItem(book),
-    chaptersList: book.chaptersList,
-  }
-}
-
-function reconcileProgress(book: BookRecord): BookRecord {
-  if (!book.generationStartedAt || book.status !== "processing") {
-    return book
-  }
-
-  const start = new Date(book.generationStartedAt).getTime()
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - start) / 1000))
-  const total = book.chaptersList.length
-  const completedCount = Math.min(total, Math.floor(elapsedSeconds / CHAPTER_SECONDS))
-  const processingIndex = completedCount < total ? completedCount : -1
-  const chapterDurationSeconds = 480
-
-  const chapters = book.chaptersList.map((chapter, index) => {
-    let status: ChapterStatus = "pending"
-    let duration: string | null = null
-
-    if (index < completedCount) {
-      status = "completed"
-      duration = getDurationLabel(chapterDurationSeconds + index * 17)
-    } else if (index === processingIndex) {
-      status = "processing"
-    }
-
-    return {
-      ...chapter,
-      status,
-      duration,
-    }
-  })
-
-  const progress = total > 0 ? Math.round((completedCount / total) * 100) : 0
-  const status: BookStatus = completedCount >= total ? "completed" : "processing"
-
-  return {
-    ...book,
-    chaptersList: chapters,
-    progress: status === "completed" ? 100 : progress,
-    status,
-    updatedAt: new Date().toISOString(),
-  }
-}
-
-async function persistReconciled(books: BookRecord[]): Promise<BookRecord[]> {
-  let changed = false
-  const reconciled = books.map((book) => {
-    const next = reconcileProgress(book)
-    if (next !== book) changed = true
-    return next
-  })
-
-  if (changed) {
-    await storeAdapter.saveBooks(reconciled)
-  }
-
-  return reconciled
-}
-
-async function ensureUploadsDir() {
-  await mkdir(UPLOADS_DIR, { recursive: true })
-}
-
-function getChapterStats(chapters: Chapter[]) {
-  return chapters.reduce(
-    (acc, chapter) => {
-      acc[chapter.status] += 1
-      return acc
-    },
-    { completed: 0, processing: 0, pending: 0, failed: 0 }
-  )
-}
-
-function makeStatusSnapshot(book: BookRecord): BookStatusSnapshot {
-  const stats = getChapterStats(book.chaptersList)
-
-  return {
-    bookId: book.id,
-    status: book.status,
-    progress: book.progress,
-    chapterStats: {
-      total: book.chaptersList.length,
-      completed: stats.completed,
-      processing: stats.processing,
-      pending: stats.pending,
-      failed: stats.failed,
-    },
-    activeChapter: book.chaptersList.find((chapter) => chapter.status === "processing") ?? null,
-    startedAt: book.generationStartedAt,
-    updatedAt: book.updatedAt,
-    parserMetadata:
-      book.parserStrategy || book.parserSourceStats
-        ? {
-            strategy: book.parserStrategy,
-            sourceStats: book.parserSourceStats,
-          }
+    id: row.id,
+    title: row.title,
+    author: row.author,
+    language: row.language,
+    status: row.status,
+    chapters: chapters.length,
+    progress:
+      row.status === "completed"
+        ? 100
+        : Math.floor(
+            (chapters.filter((c) => c.status === "completed").length /
+              chapters.length) *
+              95,
+          ),
+    coverColor: row.cover_color,
+    createdAt: row.created_at,
+    voiceId: row.voice_id,
+    voiceName: row.voice_name,
+    jobState: job?.status,
+    generationError: row.error ?? undefined,
+    workerAvailable: Boolean(
+      heartbeat.time && heartbeat.time > Date.now() - 30_000,
+    ),
+    downloadUrl: row.mp3_path
+      ? `/api/books/${row.id}/download?format=mp3`
+      : undefined,
+    chaptersList: chapters.map((c) => ({
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      duration:
+        c.duration_seconds === null
+          ? null
+          : `${Math.floor(c.duration_seconds / 60)}:${String(Math.floor(c.duration_seconds % 60)).padStart(2, "0")}`,
+      audioUrl: c.audio_path
+        ? `/api/books/${row.id}/chapters/${c.id}/audio`
         : undefined,
-  }
+      audioSize: c.audio_size ?? undefined,
+      generationError: c.error ?? undefined,
+    })),
+  };
 }
-
-export async function listBooks(): Promise<BookListItem[]> {
-  const books = await persistReconciled(await storeAdapter.listBooks())
-
-  return books
-    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-    .map(mapToListItem)
+export function getBookDetails(ownerId: string, id: string) {
+  return details(ownedBook(ownerId, id));
 }
-
-export async function getBook(bookId: string): Promise<BookDetails | null> {
-  const current = await storeAdapter.getBook(bookId)
-  if (!current) return null
-
-  const updated = reconcileProgress(current)
-  if (updated !== current) {
-    await storeAdapter.saveBook(updated)
-  }
-
-  return mapToDetails(updated)
+export function listBooks(ownerId: string): BookListItem[] {
+  return (
+    getDatabase()
+      .prepare("SELECT * FROM books WHERE owner_id=? ORDER BY created_at DESC")
+      .all(ownerId) as BookRow[]
+  ).map((row) => {
+    const { chaptersList: _chapters, ...book } = details(row);
+    return book;
+  });
 }
-
-export async function getBookStatus(bookId: string): Promise<BookStatusSnapshot | null> {
-  const current = await getBookRecord(bookId)
-  return current ? makeStatusSnapshot(current) : null
+function checkActive(ownerId: string) {
+  const active = getDatabase()
+    .prepare(
+      "SELECT COUNT(*) AS total FROM books WHERE owner_id=? AND status='processing'",
+    )
+    .get(ownerId) as { total: number };
+  if (active.total >= MAX_ACTIVE_BOOKS)
+    throw new ApiError(
+      429,
+      "You already have two audiobooks in progress. Please wait for one to finish.",
+    );
 }
-
-export async function listBookChapters(
-  bookId: string
-): Promise<{ bookId: string; chapters: Chapter[]; updatedAt: string } | null> {
-  const current = await getBookRecord(bookId)
-
-  if (!current) return null
-
-  return {
-    bookId: current.id,
-    chapters: current.chaptersList,
-    updatedAt: current.updatedAt,
-  }
-}
-
-export async function deleteBook(bookId: string): Promise<boolean> {
-  const existing = await storeAdapter.getBook(bookId)
-  if (!existing) return false
-
-  const deleted = await storeAdapter.deleteBook(bookId)
-  if (!deleted) return false
-
-  if (existing.storedFileName) {
-    const uploadPath = path.join(UPLOADS_DIR, existing.storedFileName)
-    await rm(uploadPath, { force: true }).catch(() => {})
-  }
-
-  return true
-}
-
-export async function getBookRecord(bookId: string): Promise<BookRecord | null> {
-  const current = await storeAdapter.getBook(bookId)
-  if (!current) return null
-
-  const updated = reconcileProgress(current)
-  if (updated !== current) {
-    await storeAdapter.saveBook(updated)
-  }
-
-  return updated
-}
-
 export async function createBook(input: {
-  title: string
-  author: string
-  language: string
-  file: File
-  voiceId: string
-  voiceName: string
-}): Promise<BookDetails> {
-  const existingBooks = await storeAdapter.listBooks()
-  const id = crypto.randomUUID()
-  const now = new Date().toISOString()
-  const ext = path.extname(input.file.name) || ".bin"
-  const storedFileName = `${id}${ext}`
-  const filePath = path.join(UPLOADS_DIR, storedFileName)
-  await ensureUploadsDir()
-  const buffer = Buffer.from(await input.file.arrayBuffer())
-  await writeFile(filePath, buffer)
-
-  const textContent = ext.toLowerCase() === ".txt" ? buffer.toString("utf8") : ""
-  const parseResult = buildChapterSeeds(input.file.name, textContent)
-  const chaptersList: Chapter[] = parseResult.chapters.map((seed, index) => ({
-    id: `${id}-chapter-${index + 1}`,
-    name: seed.name || `Chapter ${index + 1}`,
-    status: index === 0 ? "processing" : "pending",
-    duration: null,
-  }))
-
-  const book: BookRecord = {
-    id,
-    title: input.title.trim(),
-    author: input.author.trim(),
-    language: input.language.trim(),
-    fileName: input.file.name,
-    storedFileName,
-    fileType: input.file.type || "application/octet-stream",
-    fileSize: input.file.size,
-    status: "processing",
-    progress: 0,
-    coverColor: COVER_COLORS[existingBooks.length % COVER_COLORS.length],
-    chaptersList,
-    parserStrategy: parseResult.strategy,
-    parserSourceStats: parseResult.sourceStats,
-    voiceId: input.voiceId,
-    voiceName: input.voiceName,
-    generationStartedAt: null,
-    createdAt: now,
-    updatedAt: now,
+  ownerId: string;
+  title: string;
+  author: string;
+  language: string;
+  file: File;
+  voiceId: string;
+  voiceName: string;
+  requestKey: string;
+}) {
+  const db = getDatabase();
+  const bytes = Buffer.from(await input.file.arrayBuffer());
+  const fingerprint = createHash("sha256")
+    .update(bytes)
+    .update(
+      JSON.stringify([
+        input.title,
+        input.author,
+        input.language,
+        input.voiceId,
+      ]),
+    )
+    .digest("hex");
+  function existing() {
+    const row = db
+      .prepare("SELECT * FROM books WHERE owner_id=? AND request_key=?")
+      .get(input.ownerId, input.requestKey) as BookRow | undefined;
+    if (row && row.fingerprint !== fingerprint)
+      throw new ApiError(
+        409,
+        "This upload request was already used for a different manuscript. Please start a new upload.",
+      );
+    return row;
   }
-
-  await storeAdapter.saveBook(book)
-  return mapToDetails(book)
+  const previous = existing();
+  if (previous) return details(previous);
+  checkActive(input.ownerId);
+  const id = randomUUID();
+  const storedName = `${id}${path.extname(input.file.name).toLowerCase()}`;
+  const source = path.join(UPLOADS_DIR, storedName);
+  await writeFile(source, bytes, { mode: 0o600 });
+  try {
+    const parsed = await parseManuscript(source, input.file.name);
+    const result = db
+      .transaction(() => {
+        const duplicate = existing();
+        if (duplicate) return duplicate.id;
+        checkActive(input.ownerId);
+        const now = new Date().toISOString();
+        db.prepare(
+          `INSERT INTO books (id,owner_id,title,author,language,file_name,stored_file_name,file_type,file_size,cover_color,voice_id,voice_name,status,created_at,updated_at,request_key,fingerprint)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'processing',?,?,?,?)`,
+        ).run(
+          id,
+          input.ownerId,
+          input.title,
+          input.author,
+          input.language,
+          path.basename(input.file.name),
+          storedName,
+          path.extname(storedName),
+          bytes.length,
+          ["#4ECDC4", "#FF6B6B", "#0EA5E9", "#F59E0B"][
+            parseInt(fingerprint.slice(0, 2), 16) % 4
+          ],
+          input.voiceId,
+          input.voiceName,
+          now,
+          now,
+          input.requestKey,
+          fingerprint,
+        );
+        const insert = db.prepare(
+          "INSERT INTO chapters (id,book_id,chapter_index,name,text_content,status) VALUES (?,?,?,?,?,'pending')",
+        );
+        parsed.chapters.forEach((chapter, i) =>
+          insert.run(randomUUID(), id, i, chapter.name, chapter.content),
+        );
+        db.prepare(
+          "INSERT INTO jobs (book_id,status,requested_at) VALUES (?,'queued',?)",
+        ).run(id, Date.now());
+        return id;
+      })
+      .immediate();
+    if (result !== id) await rm(source, { force: true });
+    return getBookDetails(input.ownerId, result);
+  } catch (error) {
+    await rm(source, { force: true });
+    throw error;
+  }
 }
-
-export async function startGeneration(input: {
-  bookId: string
-  voiceId: string
-  voiceName: string
-}): Promise<BookDetails | null> {
-  const current = await storeAdapter.getBook(input.bookId)
-  if (!current) return null
-
-  const resetChapters = current.chaptersList.map((chapter, chapterIndex) => ({
-    ...chapter,
-    status: chapterIndex === 0 ? "processing" : ("pending" as ChapterStatus),
-    duration: null,
-  }))
-
-  const updated: BookRecord = {
-    ...current,
-    voiceId: input.voiceId,
-    voiceName: input.voiceName,
-    generationStartedAt: new Date().toISOString(),
-    status: "processing",
-    progress: 0,
-    chaptersList: resetChapters,
-    updatedAt: new Date().toISOString(),
-  }
-
-  await storeAdapter.saveBook(updated)
-  return mapToDetails(updated)
+export function startGeneration(ownerId: string, id: string) {
+  getDatabase()
+    .transaction(() => {
+      const book = ownedBook(ownerId, id);
+      if (book.status !== "failed") return;
+      checkActive(ownerId);
+      getDatabase()
+        .prepare(
+          "UPDATE books SET status='processing', error=NULL, updated_at=? WHERE id=?",
+        )
+        .run(new Date().toISOString(), id);
+      getDatabase()
+        .prepare(
+          "UPDATE chapters SET status='pending',error=NULL WHERE book_id=? AND status!='completed'",
+        )
+        .run(id);
+      getDatabase()
+        .prepare(
+          "UPDATE jobs SET status='queued',attempts=0,lease_token=NULL,lease_until=0,requested_at=? WHERE book_id=?",
+        )
+        .run(Date.now(), id);
+    })
+    .immediate();
+  return getBookDetails(ownerId, id);
 }
-
-export async function updateChapterAudioUrl(input: {
-  bookId: string
-  chapterId: string
-  audioUrl: string
-  duration: number
-}): Promise<boolean> {
-  const book = await storeAdapter.getBook(input.bookId)
-  if (!book) return false
-  const chapterIndex = book.chaptersList.findIndex((ch) => ch.id === input.chapterId)
-  if (chapterIndex === -1) return false
-
-  // Convert duration (seconds) to MM:SS format
-  const minutes = Math.floor(input.duration / 60)
-  const seconds = Math.round(input.duration % 60)
-  const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`
-
-  // Update the chapter with audio metadata
-  book.chaptersList[chapterIndex] = {
-    ...book.chaptersList[chapterIndex],
-    audioUrl: input.audioUrl,
-    duration: durationString,
-    status: "completed" as ChapterStatus,
-  }
-
-  // Update book status - mark as completed if all chapters are done
-  const allCompleted = book.chaptersList.every((ch) => ch.status === "completed")
-  if (allCompleted) {
-    book.status = "completed"
-    book.progress = 100
-  }
-
-  book.updatedAt = new Date().toISOString()
-  await storeAdapter.saveBook(book)
-  return true
+export async function deleteBook(ownerId: string, id: string) {
+  const book = ownedBook(ownerId, id);
+  // Active jobs own their temporary files; deleting while narration runs is intentionally blocked.
+  if (book.status === "processing")
+    throw new ApiError(
+      409,
+      "Please wait for narration to finish before deleting this audiobook.",
+    );
+  getDatabase()
+    .prepare("DELETE FROM books WHERE id=? AND owner_id=?")
+    .run(id, ownerId);
+  await Promise.all([
+    rm(path.join(UPLOADS_DIR, book.stored_file_name), { force: true }),
+    rm(path.join(AUDIO_DIR, id), { recursive: true, force: true }),
+  ]);
 }
