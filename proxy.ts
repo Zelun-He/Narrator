@@ -9,4 +9,4 @@ export function proxy(request:NextRequest) {
   }
   return NextResponse.next();
 }
-export const config={matcher:["/library","/upload","/voices","/processing","/player","/guide","/audio/:path*"]};
+export const config={matcher:["/library","/upload","/voices","/processing","/player","/guide","/account","/requests","/admin","/audio/:path*"]};

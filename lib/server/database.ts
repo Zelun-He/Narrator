@@ -44,6 +44,27 @@ export function getDatabase() {
     CREATE INDEX IF NOT EXISTS jobs_queue ON jobs(status, requested_at);
     CREATE TABLE IF NOT EXISTS worker_heartbeat (id TEXT PRIMARY KEY, last_seen INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS usage_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS request_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      state TEXT NOT NULL CHECK(state IN ('queued','processing','completed','failed')),
+      attempt INTEGER NOT NULL,
+      recorded_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS request_events_book ON request_events(book_id, id);
+    -- Backfill a snapshot for existing books without inventing earlier transitions.
+    INSERT INTO request_events(book_id,state,attempt,recorded_at)
+      SELECT book_id,status,attempts,requested_at FROM jobs
+      WHERE NOT EXISTS (SELECT 1 FROM request_events WHERE request_events.book_id=jobs.book_id);
+    CREATE TRIGGER IF NOT EXISTS request_job_created AFTER INSERT ON jobs BEGIN
+      INSERT INTO request_events(book_id,state,attempt,recorded_at)
+      VALUES (NEW.book_id,NEW.status,NEW.attempts,CAST(strftime('%s','now') AS INTEGER)*1000);
+    END;
+    CREATE TRIGGER IF NOT EXISTS request_job_changed AFTER UPDATE ON jobs
+      WHEN OLD.status != NEW.status OR OLD.attempts != NEW.attempts BEGIN
+      INSERT INTO request_events(book_id,state,attempt,recorded_at)
+      VALUES (NEW.book_id,NEW.status,NEW.attempts,CAST(strftime('%s','now') AS INTEGER)*1000);
+    END;
   `);
   chmodSync(DATABASE_FILE, 0o600);
   state.narratorDatabase = db;

@@ -448,6 +448,15 @@ try {
   console.log(
     "PASS: durable sessions/files after server restart, crashed worker recovery and failed-job retry",
   );
+  for (const id of [failedBook.id, exportBook.id]) {
+    assert.deepEqual(
+      db.prepare("SELECT state FROM request_events WHERE book_id=? ORDER BY id").all(id).map(event => event.state),
+      ["queued", "processing", "failed", "queued", "processing", "completed"],
+      "Each failure and explicit retry must remain in saved request history",
+    );
+  }
+  assert.ok(db.prepare("SELECT 1 FROM request_events WHERE book_id=? AND state='processing' AND attempt>=2").get(recovery.id), "Worker crash recovery must retain its additional attempt");
+  console.log("PASS: persisted failure/retry and worker-recovery request events");
   if (process.env.NARRATOR_BROWSER_TESTS === "1") {
     const { verifyBrowser } = await import("./browser-e2e.mjs");
     await verifyBrowser({ base, folder });
@@ -477,6 +486,7 @@ try {
     200,
   );
   assert.equal((await request(chapter.audioUrl, alice)).status, 404);
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM request_events WHERE book_id=?").get(book.id).total, 0);
   assert.equal(
     (
       await request("/api/auth/sign-out", alice, {

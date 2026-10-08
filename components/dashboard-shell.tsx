@@ -16,12 +16,15 @@ const pageTitles: Record<string, string> = {
   "/processing": "Narration progress",
   "/player": "Listening room",
   "/guide": "Getting started",
+  "/account": "Your account",
+  "/requests": "Request history",
+  "/admin": "Manage accounts",
 };
 export default function DashboardShell({
   children,
   user,
 }: {
-  user: { name: string; email: string };
+  user: { name: string; email: string; role?: string | null };
   children: React.ReactNode;
 }) {
   const pathname = usePathname();

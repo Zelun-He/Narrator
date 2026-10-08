@@ -11,4 +11,4 @@ RUN /opt/narrator-python/bin/python scripts/setup-narration.py && npm run build 
 ENV NODE_ENV=production NARRATOR_DATA_DIR=/data
 USER node
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:web"]
