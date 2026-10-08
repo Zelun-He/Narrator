@@ -40,12 +40,16 @@ const navigation = [
 
 export function AppSidebar({
   user,
+  demo = false,
 }: {
   user: { name: string; email: string; role?: string | null };
+  demo?: boolean;
 }) {
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const studioHref = (href: string) => demo ? `/demo${href}` : href;
   async function logout() {
+    if (demo) { window.location.assign("/login"); return; }
     setSigningOut(true);
     setLogoutError(null);
     try {
@@ -102,13 +106,13 @@ export function AppSidebar({
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname === studioHref(item.href)}
                     className="h-11 rounded-lg px-3 text-sm data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                   >
-                    <Link href={item.href} onClick={closeMobile}>
+                    <Link href={studioHref(item.href)} onClick={closeMobile}>
                       <item.icon size={18} />
                       <span>{item.title}</span>
-                      {pathname === item.href && (
+                      {pathname === studioHref(item.href) && (
                         <span className="ml-auto size-1.5 rounded-full bg-primary" />
                       )}
                     </Link>
@@ -125,7 +129,7 @@ export function AppSidebar({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild className="h-11">
-                <Link href="/guide" onClick={closeMobile}>
+                <Link href={studioHref("/guide")} onClick={closeMobile}>
                   <HelpCircle size={18} />
                   Getting started
                 </Link>
@@ -159,7 +163,7 @@ export function AppSidebar({
             Free audiobook creation. More room for your imagination.
           </p>
           <Link
-            href="/upload"
+            href={studioHref("/upload")}
             onClick={closeMobile}
             className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-primary"
           >

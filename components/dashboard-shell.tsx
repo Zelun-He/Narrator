@@ -23,14 +23,16 @@ const pageTitles: Record<string, string> = {
 export default function DashboardShell({
   children,
   user,
+  demo = false,
 }: {
   user: { name: string; email: string; role?: string | null };
   children: React.ReactNode;
+  demo?: boolean;
 }) {
   const pathname = usePathname();
   return (
     <SidebarProvider className="author-studio">
-      <AppSidebar user={user} />
+      <AppSidebar user={user} demo={demo} />
       <SidebarInset className="min-w-0">
         <a href="#main-content" className="skip-link">
           Skip to content
@@ -43,7 +45,7 @@ export default function DashboardShell({
             </span>
             <span className="hidden text-border sm:inline">/</span>
             <span className="text-xs font-medium">
-              {pageTitles[pathname] || "Narrator"}
+              {pageTitles[demo ? pathname.replace(/^\/demo/, "") : pathname] || "Narrator"}
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -55,6 +57,7 @@ export default function DashboardShell({
           </div>
         </header>
         <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+          {demo && <div role="note" className="border-b bg-primary/5 px-6 py-3 text-sm text-muted-foreground">Demo studio · Sample books only. Uploads and account changes are unavailable in this preview.</div>}
           {children}
         </main>
       </SidebarInset>
