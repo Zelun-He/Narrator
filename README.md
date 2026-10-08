@@ -34,7 +34,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-In a second terminal:
+`npm run dev` starts both the web app and narration worker. For web-only UI or account development, use `npm run dev:web`; run a worker separately only with the web-only command:
 
 ```bash
 npm run worker
@@ -42,11 +42,31 @@ npm run worker
 
 On Windows use `.venv\Scripts\python.exe` for Python commands. The worker loads `.env.local` using Next.js environment loading. `NARRATOR_PYTHON` and `NARRATOR_FFMPEG` can override executable paths. The checked-in historical Windows binaries are no longer used.
 
-For a local production run, use `npm run build`, `npm start`, and `NODE_ENV=production npm run worker`. Both processes must share `NARRATOR_DATA_DIR` (default `data/private`) and the same model directory. SQLite and files require a persistent local disk; this complete backend cannot run inside an ephemeral Vercel/serverless function. Do not place private data under `public/`.
+For a local production run, use `npm run build` then `npm start`. This checks the narration runtime, starts the web server, migrates the database, then starts the worker once the server is healthy. A process failure stops the other process; interrupting the command shuts down both. For separately supervised services use `npm run start:web` and `NODE_ENV=production npm run worker`. Docker Compose already supervises them separately. Both processes must share `NARRATOR_DATA_DIR` (default `data/private`) and the same model directory. SQLite and files require a persistent local disk; this complete backend cannot run inside an ephemeral Vercel/serverless function. Do not place private data under `public/`.
+
+## Accounts and saved requests
+
+Accounts, password hashes, revocable sessions, manuscripts, jobs and request history live in **your own SQLite database** at `NARRATOR_DATA_DIR/narrator.sqlite`. No hosted authentication account, paid database or API key is required. The authentication secret is generated once and stored alongside it. Keep the directory on a persistent disk or the Compose volume.
+
+- **Your account** (`/account`): update the display name, change the password using the current password, or log out other devices. Password changes revoke other sessions.
+- **Request history** (`/requests`): searchable, paginated narration events, including queue entry, each worker attempt, retries, failures and completion. Database triggers save transitions in the same transaction as each job change, including worker recovery. Events survive browser/server restarts and are visible only to the book owner. Deleting a book removes its history with its manuscript. Existing books receive one current-state snapshot when upgraded.
+- **Manage accounts** (`/admin`): an operator can search accounts, see book/session counts, suspend/restore access and revoke sessions. Suspensions revoke sessions and block sign-in, while retaining books. Ordinary authors cannot access the operator page or API. The operator does not get access to manuscript contents through this page.
+
+Create your own account through `/signup`, then grant operator access **on the server**:
+
+```bash
+npm run accounts -- promote your-email@example.com
+npm run accounts -- list
+npm run accounts -- status
+```
+
+With Docker, use `docker compose exec web npm run accounts -- promote your-email@example.com`. Sign in again, then open **Manage accounts**. Public signup always creates an author; nobody is made administrator automatically. Role changes revoke the user's sessions. `npm run accounts -- demote EMAIL` removes operator access and refuses to remove the last active administrator. Password reset by email is not configured; authors can change their password while signed in. Account-management APIs deliberately disallow deleting accounts, changing roles or impersonating authors.
+
+The combined local launcher binds to `127.0.0.1` by default. Set `NARRATOR_HOST=0.0.0.0` for access from another machine or a container. Use an exact matching `BETTER_AUTH_URL` when changing the public hostname or port. Docker's web-only command already listens on the container interface.
 
 ## Author experience
 
-1. **Create an account or log in.** Email/password login uses Better Auth, hashed passwords and revocable, HTTP-only sessions. There is no email verification or password-reset service in this first version; use a password manager.
+1. **Create an account or log in.** Email/password login uses Better Auth, hashed passwords and revocable, HTTP-only sessions. Manage your name, password and other signed-in devices in **Your account**. Email verification and email-based password recovery are not configured.
 2. **Upload and review.** English TXT, DOCX and text-based PDF are supported, up to 10 MB / 100,000 words / 200 chapters. Scanned PDFs require OCR before upload. Chapter/Part/Section headings are retained; manuscripts without headings are split at paragraph boundaries.
 3. **Create.** A persisted queue starts automatically. Progress advances only when chapter audio has been produced and saved. The interface identifies an offline worker, and a failed job can be retried without re-uploading or repeating completed chapters.
 4. **Listen and download.** Chapter WAV playback supports HTTP Range requests for seeking. Completed books provide an actual MP3 and a ZIP containing numbered WAV chapters.
@@ -75,11 +95,14 @@ Historical anonymous JSON/SQLite books and public audio are not automatically as
 npm run typecheck
 npm run build
 npm run test:backend
+npm run test:accounts
 ```
 
 The backend integration suite launches an isolated production server and real worker, creates two accounts, and checks ownership, CSRF, upload limits, TXT/DOCX/PDF extraction, actual Piper WAVs, MP3/ZIP validity, Range playback, idempotent uploads, deletion, session revocation, server restarts and worker crash recovery. Install narration dependencies and download the model first. Test data is temporary and removed after the suite.
 
 Optional browser verification requires Playwright and Chromium. Set `NARRATOR_BROWSER_TESTS=1` when running the suite. `NARRATOR_CHROMIUM_PATH`, `NARRATOR_PLAYWRIGHT_IMPORT` and `NARRATOR_AXE_IMPORT` support installed browser runtimes. It exercises signup → upload → generated audio → playback/download → logout/login in a mobile viewport.
+
+`test:accounts` upgrades a pre-existing account database, starts the complete web/worker stack, tests operator permissions and role forgery, changes passwords, suspends/restores accounts, revokes devices, generates a real MP3, and checks private request history and sessions after restarting both processes. With browser verification enabled it also checks mobile hero centering, author profile updates, the history link and operator actions with Axe accessibility checks.
 
 Back up the entire private data directory with web and worker stopped, including `auth-secret` and SQLite WAL files. Restore onto a persistent volume with matching ownership. Never commit author data, credentials or generated book audio.
 

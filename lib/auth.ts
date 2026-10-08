@@ -1,5 +1,7 @@
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { getMigrations } from "better-auth/db/migration";
+import { admin } from "better-auth/plugins/admin";
+import { defaultAc, userAc } from "better-auth/plugins/admin/access";
 import { randomBytes } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -33,13 +35,20 @@ function authSecret() {
   return readFileSync(file, "utf8").trim();
 }
 
-function options(): BetterAuthOptions {
+function options() {
   const database = getDatabase();
   return {
     appName: "Narrator",
     baseURL: AUTH_ORIGIN,
     secret: authSecret(),
     database,
+    plugins: [admin({
+      roles: {
+        admin: defaultAc.newRole({ user: ["list", "get", "ban"], session: ["list", "revoke"] }),
+        user: userAc,
+      },
+      bannedUserMessage: "This account is suspended. Please contact the Narrator server operator.",
+    })],
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 10,
@@ -64,10 +73,10 @@ function options(): BetterAuthOptions {
       useSecureCookies: AUTH_ORIGIN.startsWith("https:"),
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
     },
-  };
+  } satisfies BetterAuthOptions;
 }
 
-const createAuth = (config: BetterAuthOptions) => betterAuth(config);
+const createAuth = (config: ReturnType<typeof options>) => betterAuth(config);
 const state = globalThis as typeof globalThis & {
   narratorAuth?: Promise<ReturnType<typeof createAuth>>;
 };

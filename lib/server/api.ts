@@ -3,7 +3,11 @@ import { getAuth, AUTH_ORIGIN } from "../auth";
 import { ApiError } from "./errors";
 import { getDatabase } from "./database";
 export { ApiError } from "./errors";
-export type AuthorUser = { id: string; name: string; email: string };
+export type AuthorUser = { id: string; name: string; email: string; role?: string | null };
+
+export function isAdministrator(user: { role?: string | null }) {
+  return user.role?.split(",").includes("admin") === true;
+}
 
 export async function withUser(
   request: Request,

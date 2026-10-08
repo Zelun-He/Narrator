@@ -831,6 +831,18 @@
   .story-hero-copy h1 {
     font-size: clamp(48px, 9vw, 70px);
     letter-spacing: -1.7px;
+    margin-inline: auto;
+  }
+  .story-hero-copy {
+    text-align: center;
+    min-width: 0;
+  }
+  .story-hero-copy > .handwritten,
+  .story-hero-copy .story-lede {
+    margin-inline: auto;
+  }
+  .story-hero-copy .marker {
+    margin-left: 0;
   }
   .story-lede {
     font-size: 17px;
@@ -839,6 +851,7 @@
   .story-actions {
     margin-top: 26px;
     gap: 18px 13px;
+    justify-content: center;
   }
   .story-button {
     font-size: 13px;
@@ -1097,4 +1110,9 @@
 .story-hero-animation .hero-sticker {
   top: -8px;
   right: 0;
+}
+@media (max-width: 767px) {
+  .story-hero-animation .floating-sample {
+    margin-inline: auto;
+  }
 }

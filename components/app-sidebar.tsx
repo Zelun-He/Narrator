@@ -12,6 +12,9 @@ import {
   HelpCircle,
   ArrowUpRight,
   Heart,
+  History,
+  UserRound,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,12 +34,14 @@ const navigation = [
   { title: "Your library", href: "/library", icon: Library },
   { title: "New audiobook", href: "/upload", icon: Plus },
   { title: "Voice studio", href: "/voices", icon: Mic2 },
+  { title: "Request history", href: "/requests", icon: History },
+  { title: "Your account", href: "/account", icon: UserRound },
 ];
 
 export function AppSidebar({
   user,
 }: {
-  user: { name: string; email: string };
+  user: { name: string; email: string; role?: string | null };
 }) {
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -53,6 +58,9 @@ export function AppSidebar({
     }
   }
   const pathname = usePathname();
+  const items = user.role?.split(",").includes("admin")
+    ? [...navigation, { title: "Manage accounts", href: "/admin", icon: ShieldCheck }]
+    : navigation;
   const { isMobile, setOpenMobile } = useSidebar();
   const closeMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -90,7 +98,7 @@ export function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
-              {navigation.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
