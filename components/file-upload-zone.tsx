@@ -19,6 +19,10 @@ export function FileUploadZone({
       setError("Choose a PDF, DOCX, or TXT manuscript.");
       return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Please upload a manuscript smaller than 10 MB.");
+      return;
+    }
     if (!file.size) {
       setError("This file is empty. Please choose a manuscript with text.");
       return;

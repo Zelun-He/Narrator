@@ -2,6 +2,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import ManuscriptUpload from "./manuscript-upload";
 import DashboardShell from "./dashboard-shell";
 import DashboardPage from "./library-dashboard";
 import { DEMO_BOOKS } from "@/lib/demo-books";
@@ -13,6 +14,7 @@ import { Button } from "./ui/button";
 function DemoContent({ page }: { page: string }) {
   const bookId = useSearchParams().get("bookId");
   const book = DEMO_BOOKS.find(b => b.id === bookId) ?? DEMO_BOOKS[0];
+  if (page === "upload") return <ManuscriptUpload demo />;
   if (page === "library") return <DashboardPage demoBooks={DEMO_BOOKS} />;
   return <div className="studio-container studio-container-narrow">
     <Link href="/demo/library" className="text-sm text-primary">← Back to sample library</Link>

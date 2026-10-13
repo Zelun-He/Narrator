@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAuth } from "@/lib/auth";
+import { authorSession } from "@/lib/server/session";
 import DashboardShell from "@/components/dashboard-shell";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,9 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await (
-    await getAuth()
-  ).api.getSession({ headers: await headers() });
+  const session = await authorSession(await headers());
   if (!session) redirect("/login");
   return (
     <DashboardShell

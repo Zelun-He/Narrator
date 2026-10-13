@@ -2,9 +2,19 @@
 
 A free, self-hosted author studio: create an account, upload your manuscript, and turn it into an audiobook. The storybook interface includes a private bookshelf, narrator preview, chapter progress and a listening room. There are no paid TTS APIs or subscriptions.
 
-## Preview without the backend
+## Live frontend and persistent backend
 
-On `/login`, enter **testuser** and **123456** to open the public demo studio at `/demo/library`. This works without SQLite, a worker, or an authentication secret, including on Vercel. The preview uses fictional sample books and the public voice sample. It does not create an author account or session, call private APIs, grant administrator access, accept manuscripts, or save changes. All real author routes still require their normal authenticated session.
+Vercel serves the frontend; the account database, private files, and Piper worker need a persistent server. The frontend now supports **`NARRATOR_BACKEND_URL`**: set it in Vercel to the HTTPS origin of the running Narrator Docker server, then redeploy. Every `/api/*` request, including signup, uploads, progress, audio Range requests and downloads, is routed to that backend. Protected server-rendered pages validate the session against the same backend. No separate hosted auth service is needed.
+
+On the backend, set **`BETTER_AUTH_URL=https://narrator-eight.vercel.app`** (or your frontend's exact origin), retain the `/data` volume, and leave `NARRATOR_BACKEND_URL` unset. Keep the backend behind HTTPS and allow 11 MB request bodies. Both frontend and backend must use this version. Do not point the upstream at the frontend itself. A Vercel preview hostname needs its own matching backend/auth origin; it cannot share production cookies automatically.
+
+The Docker configuration below runs the full app as well, so moving the entire website to the persistent server is also supported. Vercel alone, with no upstream server configured, cannot store accounts or narrate manuscripts. The repository does not provision a host automatically.
+
+## Test account and public preview
+
+On the persistent server, run `npm run accounts -- test-account` (Docker: `docker compose exec web npm run accounts -- test-account`). Then **testuser / 123456** signs in as an ordinary author and can use the complete upload/generation/download flow. This operator command creates the account once and refuses to overwrite an existing account. Its password is hashed; it has no administrator access. The shared public test account is for nonprivate test manuscripts only. Normal signups still require at least 10 password characters.
+
+If the backend is unavailable, the same test login opens `/demo/library`. The preview uses fictional books and the public voice sample. **New audiobook now uses the same manuscript/details/narrator review form as the author workspace**. Preview files stay in the browser and the final step explains that saving and real audio generation require an author backend. The public preview never creates a session, uploads a manuscript, or accesses private APIs. An explicit preview link is also available on `/login`.
 
 ## Run with Docker
 
@@ -101,6 +111,7 @@ npm run build
 npm run test:backend
 npm run test:accounts
 npm run test:demo # requires Playwright and Chromium
+npm run test:deployment # frontend proxy + persistent backend + real worker
 ```
 
 The backend integration suite launches an isolated production server and real worker, creates two accounts, and checks ownership, CSRF, upload limits, TXT/DOCX/PDF extraction, actual Piper WAVs, MP3/ZIP validity, Range playback, idempotent uploads, deletion, session revocation, server restarts and worker crash recovery. Install narration dependencies and download the model first. Test data is temporary and removed after the suite.

@@ -23,14 +23,15 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      if (!signup && email.trim().toLowerCase() === "testuser") {
+      const testLogin = !signup && email.trim().toLowerCase() === "testuser";
+      if (testLogin) {
         if (password !== "123456") {
-          setError("The demo password is 123456.");
+          setError("The test password is 123456.");
           setBusy(false);
           return;
         }
-        window.location.assign("/demo/library");
-        return;
+        const health = await fetch("/api/health", { cache: "no-store" });
+        if (!health.ok) { window.location.assign("/demo/library"); return; }
       }
       const result = signup
         ? await authClient.signUp.email({
@@ -38,10 +39,12 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
             email: email.trim(),
             password,
           })
-        : await authClient.signIn.email({ email: email.trim(), password });
+        : await authClient.signIn.email({ email: testLogin ? "testuser@narrator.invalid" : email.trim(), password });
       if (result.error) {
         setError(
-          result.error.status === 429
+          result.error.status === 503
+            ? "The account server is unavailable. Please try again once it reconnects."
+            : result.error.status === 429
             ? "Too many attempts. Please wait a minute and try again."
             : signup
               ? result.error.message ||
@@ -88,7 +91,7 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">{signup ? "Email address" : "Email or demo username"}</Label>
+            <Label htmlFor="email">{signup ? "Email address" : "Email or test username"}</Label>
             <Input
               id="email"
               type={signup ? "email" : "text"}
@@ -138,9 +141,10 @@ export function AccountForm({ signup = false }: { signup?: boolean }) {
         </form>
         {!signup && (
           <p className="mt-5 text-center text-sm text-muted-foreground">
-            Preview the dashboard: <strong>testuser</strong> / <strong>123456</strong>
+            Test the dashboard: <strong>testuser</strong> / <strong>123456</strong>
           </p>
         )}
+        {!signup && <p className="mt-2 text-center text-sm"><Link href="/demo/library" className="text-primary underline">Browse the public preview</Link></p>}
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {signup ? "Already have an account? " : "New to Narrator? "}
           <Link
