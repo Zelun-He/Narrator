@@ -1,15 +1,27 @@
+import { hashPassword } from "better-auth/crypto";
+import { randomUUID } from "node:crypto";
 import { getAuth } from "../lib/auth";
 import { getDatabase } from "../lib/server/database";
 import { DATA_DIR } from "../lib/server/runtime";
 
 async function main() {
   const [command, suppliedEmail] = process.argv.slice(2);
-  if (!["list", "promote", "demote", "status"].includes(command)) {
-    throw new Error("Usage: npm run accounts -- list | status | promote EMAIL | demote EMAIL");
+  if (!["list", "promote", "demote", "status", "test-account"].includes(command)) {
+    throw new Error("Usage: npm run accounts -- list | status | promote EMAIL | demote EMAIL | test-account");
   }
   await getAuth(); // Applies auth and admin schema migrations before account access.
   const db = getDatabase();
   try {
+    if (command === "test-account") {
+      const email = "testuser@narrator.invalid";
+      if (db.prepare("SELECT id FROM user WHERE email=?").get(email)) throw new Error("The test account already exists. Its password and permissions were left unchanged.");
+      const password = await hashPassword("123456");
+      const result = await (await getAuth()).api.signUpEmail({ body: { email, name: "testuser", password: randomUUID() } });
+      const changed = db.prepare("UPDATE account SET password=?,updatedAt=? WHERE userId=? AND providerId='credential'").run(password, Date.now(), result.user.id);
+      if (changed.changes !== 1) throw new Error("Could not provision the test credentials.");
+      console.log("Created ordinary author testuser / 123456. This public test account can upload books; do not use it for private manuscripts.");
+      return;
+    }
     if (command === "list") {
       console.table(db.prepare("SELECT id,name,email,role,banned FROM user ORDER BY createdAt DESC").all());
       return;
@@ -27,6 +39,7 @@ async function main() {
     }
     const email = suppliedEmail?.trim().toLowerCase();
     if (!email) throw new Error("Specify the email of an existing account.");
+    if (command === "promote" && email === "testuser@narrator.invalid") throw new Error("The public test account cannot become an administrator.");
     db.transaction(() => {
       const user = db.prepare("SELECT id,role,banned FROM user WHERE lower(email)=?").get(email) as { id: string; role: string | null; banned: number } | undefined;
       if (!user) throw new Error("Account not found. Create it through /signup first.");

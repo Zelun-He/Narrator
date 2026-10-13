@@ -11,7 +11,11 @@ async function handle(request: Request) {
   const pathname = new URL(request.url).pathname;
   if (!publicRoutes.has(pathname.slice("/api/auth".length)))
     return Response.json({ error: "Not found." }, { status: 404, headers: { "Cache-Control": "no-store" } });
-  return (await getAuth()).handler(request);
+  try { return await (await getAuth()).handler(request); }
+  catch (error) {
+    console.error("Narrator auth unavailable:", error);
+    return Response.json({ message: "The account server is unavailable. Please try again once it reconnects.", code: "BACKEND_UNAVAILABLE" }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
 }
 export const GET = handle;
 export const POST = handle;

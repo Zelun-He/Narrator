@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "test:backend": "node scripts/backend-e2e.mjs",
     "test:accounts": "node scripts/accounts-e2e.mjs",
-    "test:demo": "node scripts/demo-e2e.mjs"
+    "test:demo": "node scripts/demo-e2e.mjs",
+    "test:deployment": "node scripts/deployment-e2e.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

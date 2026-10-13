@@ -106,10 +106,10 @@ export async function verifyBrowser({ base, folder }) {
     await page.getByRole("button", { name: "Log out", exact: true }).click();
     await page.waitForURL(base + "/login");
     await page.goto(base + "/login?next=https%3A%2F%2Fattacker.test");
-    await page.getByLabel("Email address").fill("browser@example.test");
+    await page.getByLabel("Email or test username").fill("browser@example.test");
     await page.getByLabel("Password", { exact: true }).fill("wrong-password");
     await page.getByRole("button", { name: "Log in", exact: true }).click();
-    await page.getByRole("alert").waitFor();
+    await page.getByText("Your email or password wasn’t recognized. Please try again.", { exact: true }).waitFor();
     await page
       .getByLabel("Password", { exact: true })
       .fill("browser-test-password");

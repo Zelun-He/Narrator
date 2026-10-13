@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: { proxyClientMaxBodySize: "11mb" },
   outputFileTracingExcludes: {
     "/*": [
       "./data/**/*",

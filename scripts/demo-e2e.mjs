@@ -12,14 +12,14 @@ try {
  browser=await chromium.launch({executablePath:process.env.NARRATOR_CHROMIUM_PATH,headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:390,height:844}}); const errors=[]; const api=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(new URL(r.url()).pathname.startsWith('/api/'))api.push(r.url());});
- await page.goto(base+'/login'); await page.getByLabel('Email or demo username').fill('testuser'); await page.getByLabel('Password',{exact:true}).fill('wrong'); await page.getByRole('button',{name:'Log in',exact:true}).click(); await page.getByText('The demo password is 123456.',{exact:true}).waitFor();
+ await page.goto(base+'/login'); await page.getByLabel('Email or test username').fill('testuser'); await page.getByLabel('Password',{exact:true}).fill('wrong'); await page.getByRole('button',{name:'Log in',exact:true}).click(); await page.getByText('The test password is 123456.',{exact:true}).waitFor();
  await page.getByLabel('Password',{exact:true}).fill('123456');await page.getByRole('button',{name:'Log in',exact:true}).click(); await page.waitForURL('**/demo/library'); await page.getByRole('heading',{name:'Your bookshelf'}).waitFor();assert.equal(await page.locator('.project-card').count(),3);
  await page.getByRole('button',{name:'Ready to listen'}).click(); assert.equal(await page.locator('.project-card').count(),1);
  await page.getByRole('link',{name:'Listen',exact:true}).click();await page.waitForURL('**/demo/player?*');await page.locator('audio').waitFor();assert.equal(await page.locator('audio').getAttribute('src'),'/samples/lj.wav');
- for(const route of ['upload','voices','requests','account','guide','processing']){await page.goto(base+'/demo/'+route);await page.getByRole('heading',{level:1}).waitFor();assert.equal(await page.locator('input[type=file]').count(),0);}
+ for(const route of ['upload','voices','requests','account','guide','processing']){await page.goto(base+'/demo/'+route);await page.getByRole('heading',{level:1}).waitFor();if(route==='upload'){await page.locator('input[type=file]').setInputFiles({name:'preview.txt',mimeType:'text/plain',buffer:Buffer.from('Chapter One\nA preview manuscript.')});await page.getByLabel('Author name').fill('Preview Author');await page.getByRole('button',{name:'Continue to narrator'}).click();await page.getByRole('button',{name:'Create my audiobook'}).click();await page.getByText('You’ve reviewed your manuscript.',{exact:false}).waitFor();}}
  await page.goto(base+'/demo/admin');assert.equal(await page.getByText('This page could not be found.').count(),1);
  await page.goto(base+'/demo/library');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.getByRole('button',{name:'Toggle navigation'}).click();await page.getByRole('button',{name:'Log out',exact:true}).click();await page.waitForURL('**/login');
- assert.deepEqual(errors,[]); assert.deepEqual(api,[],'demo must never request private APIs or issue a real session');
+ assert.deepEqual(errors,[]); assert.deepEqual(api.map(u=>new URL(u).pathname),['/api/health'],'only readiness check is allowed; demo must not request private APIs');
  console.log('PASS: Vercel backend unavailable; testuser login, wrong-password feedback, library/filter/player, demo navigation, mobile width, logout, no private API calls.');
 } finally {await browser?.close();server.kill('SIGTERM');}
